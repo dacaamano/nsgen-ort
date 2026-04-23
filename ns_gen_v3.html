@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NS+Gen — Generador de Diagramas Nassi-Schneidermann</title>
+<meta name="author" content="Daniel - Estudiante de Analista de Sistemas, ORT Argentina">
+<meta name="description" content="Generador visual de diagramas Nassi-Schneidermann con exportación automática a Java, Python y pseudocódigo">
+<meta name="keywords" content="Nassi-Schneidermann, NS+, diagramas, programación, ORT Argentina, educación">
+<meta name="license" content="MIT License - Código Abierto">
+
+<!-- PWA Meta Tags -->
+<meta name="theme-color" content="#1a3a6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NS+Gen">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Icons -->
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<!--
+╔════════════════════════════════════════════════════════════════════════════╗
+║                              NS+Gen v3.0                                   ║
+║            Generador de Diagramas Nassi-Schneidermann Plus                ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Autor: Daniel
+Institución: ORT Argentina - Analista de Sistemas
+Año: 2026 - Primer Cuatrimestre
+Materia: Fundamentos de Programación
+
+Licencia: MIT License (Código Abierto)
+Este software ha sido donado a ORT Argentina para uso libre en contextos
+educativos.
+
+Repositorio: (Pendiente publicación en GitHub)
+Manual: Ver MANUAL_DE_USUARIO.txt
+Documentación: Ver README.md
+
+Desarrollado con asistencia de Claude (Anthropic)
+Tecnologías: HTML5, CSS3, JavaScript vanilla (sin dependencias)
+
+Para más información, ver archivos:
+- LICENSE.txt         (Términos de la licencia MIT)
+- MANUAL_DE_USUARIO.txt  (Guía completa de uso)
+- README.md           (Información del proyecto)
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f8f9fa;--bg3:#f1f3f5;
+  --text:#1a1a2e;--text2:#555577;--text3:#9999bb;
+  --border:#dde0e8;--border2:#c8ccd8;
+  --blue:#1a3a6e;--blue-light:#eef3ff;--blue-mid:#dce8ff;
+  --green:#0F6E56;--green-light:#E1F5EE;
+  --purple:#534AB7;--purple-light:#EEEDFE;
+  --amber:#854F0B;--amber-light:#fff3e0;
+  --red:#c0392b;
+  --ns-green:#56d364;--java-blue:#79c0ff;--py-orange:#ffa657;
+  --code-bg:#0d1117;--code-border:#30363d;--code-text:#8b949e;
+  --radius:6px;
+  font-family:'Segoe UI',system-ui,sans-serif;
+}
+body.dark-theme{
+  --bg:#1a1d24;--bg2:#22252d;--bg3:#191c22;
+  --text:#e6edf3;--text2:#9198a1;--text3:#6e7681;
+  --border:#30363d;--border2:#424a53;
+  --blue:#58a6ff;--blue-light:#1c2c47;--blue-mid:#2d4665;
+  --green:#3fb950;--green-light:#0d3a1f;
+  --purple:#bc8cff;--purple-light:#2e1f47;
+  --amber:#f0883e;--amber-light:#3d2817;
+  --red:#f85149;
+  --code-bg:#0d1117;--code-border:#30363d;--code-text:#8b949e;
+}
+body{background:var(--bg3);color:var(--text);font-size:13px;min-height:100vh;display:flex;flex-direction:column}
+h1{font-size:13px}
+
+/* ── APP SHELL ── */
+.app{display:grid;grid-template-columns:200px 1fr 220px;grid-template-rows:auto 1fr;height:100vh;overflow:hidden}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--blue);border-bottom:1px solid #0f2550}
+.logo{color:#fff;font-size:14px;font-weight:700;letter-spacing:0.5px;margin-right:4px}
+.logo span{color:#7eb8ff;font-weight:400}
+.topbar button{font-size:11px;padding:4px 11px;border:0.5px solid rgba(255,255,255,0.25);border-radius:var(--radius);background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;transition:background 0.15s}
+.topbar button:hover{background:rgba(255,255,255,0.2)}
+.topbar-sep{flex:1}
+.view-tab{font-size:11px;padding:4px 11px;border:0.5px solid rgba(255,255,255,0.2);border-radius:var(--radius);background:transparent;color:rgba(255,255,255,0.65);cursor:pointer}
+.view-tab.active{background:rgba(255,255,255,0.22);color:#fff;font-weight:500}
+
+/* ── LEFT SIDEBAR ── */
+.sidebar-left{background:var(--bg2);border-right:0.5px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.slh{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.slh span{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+.slh button{font-size:11px;padding:3px 9px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);cursor:pointer;color:var(--text2);font-weight:500}
+.slh button:hover{background:var(--blue-light);color:var(--blue);border-color:var(--blue)}
+.method-item{padding:9px 10px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.1s}
+.method-item:hover{background:var(--bg)}
+.method-item.active{background:var(--blue);color:#fff}
+.method-item.active .msub{color:rgba(255,255,255,0.65)}
+.mname{font-weight:600;font-size:12px}
+.msub{font-size:10px;color:var(--text3);margin-top:2px;font-family:monospace}
+.macts{display:flex;gap:4px;margin-top:5px}
+.macts button{font-size:10px;padding:2px 6px;border:0.5px solid rgba(255,255,255,0.25);border-radius:3px;background:rgba(255,255,255,0.1);cursor:pointer;color:rgba(255,255,255,0.8)}
+.method-item:not(.active) .macts button{border-color:var(--border);background:transparent;color:var(--text3)}
+.method-item:not(.active) .macts button:hover{color:var(--red);border-color:var(--red)}
+.method-item.active .macts button:hover{background:rgba(255,0,0,0.2)}
+
+/* ── CENTER ── */
+.center{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.tabs-row{display:flex;border-bottom:0.5px solid var(--border);background:var(--bg2);overflow-x:auto;flex-shrink:0}
+.tab{font-size:11px;padding:7px 13px;cursor:pointer;color:var(--text2);background:transparent;white-space:nowrap;border:none;border-right:0.5px solid var(--border);border-bottom:2px solid transparent;font-family:monospace}
+.tab:hover{color:var(--text);background:var(--bg)}
+.tab.active{color:var(--blue);border-bottom:2px solid var(--blue);background:var(--bg);font-weight:600}
+.tab.add-tab{font-size:18px;padding:4px 12px;border-right:none;font-family:sans-serif;color:var(--blue)}
+.tab.add-tab:hover{background:var(--blue-light)}
+.diagram-area{flex:1;overflow:auto;padding:16px;background:var(--bg)}
+
+/* ── CODE PANEL ── */
+.code-panel{flex:1;overflow:auto;display:flex;flex-direction:column;background:var(--code-bg)}
+.code-lang-tabs{display:flex;border-bottom:1px solid var(--code-border);flex-shrink:0}
+.clt{font-size:11px;padding:7px 16px;cursor:pointer;color:var(--code-text);background:transparent;border:none;border-bottom:2px solid transparent;font-weight:500}
+.clt:hover{color:#e6edf3}
+.clt.active.ns{color:var(--ns-green);border-bottom-color:var(--ns-green)}
+.clt.active.java{color:var(--java-blue);border-bottom-color:var(--java-blue)}
+.clt.active.python{color:var(--py-orange);border-bottom-color:var(--py-orange)}
+.code-copy-bar{display:flex;justify-content:flex-end;padding:5px 10px;background:#161b22;border-bottom:1px solid var(--code-border);flex-shrink:0}
+.code-copy-bar button{font-size:11px;padding:3px 10px;border:0.5px solid var(--code-border);border-radius:var(--radius);background:#21262d;color:var(--code-text);cursor:pointer}
+.code-copy-bar button:hover{background:#30363d;color:#e6edf3}
+.code-block{flex:1;overflow:auto;padding:14px 18px;font-family:'Consolas','Fira Code',monospace;font-size:12px;line-height:1.75;white-space:pre;color:#e6edf3}
+.code-block.ns .kw{color:var(--ns-green)}.code-block.java .kw{color:var(--java-blue)}.code-block.python .kw{color:var(--py-orange)}
+
+/* ── DIAGRAM ── */
+.mhbox{border:2px solid var(--blue);border-radius:var(--radius) var(--radius) 0 0;overflow:hidden}
+.mhtitle{background:var(--blue);color:#fff;font-size:12px;font-weight:600;padding:5px 10px;font-family:monospace}
+.method-edit-btns button:hover{background:rgba(255,255,255,0.25) !important;opacity:1 !important}
+.decl-section{background:var(--bg);border-bottom:2px solid var(--blue);padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.decl-row{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:0.5px solid var(--border);border-radius:4px;background:var(--bg2)}
+.dbadge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;min-width:38px;text-align:center;letter-spacing:0.3px}
+.badge-var{background:#E6F1FB;color:#0C447C}
+.badge-const{background:#EAF3DE;color:#27500A}
+.badge-param{background:#FAEEDA;color:#633806}
+.decl-row input{border:none;background:transparent;font-size:11px;color:var(--text);padding:0;font-family:monospace;width:auto;min-width:120px;max-width:400px}
+.del-d{font-size:10px;padding:1px 5px;border:0.5px solid var(--border);border-radius:3px;background:transparent;cursor:pointer;color:var(--red);opacity:0.6}
+.del-d:hover{opacity:1}
+.decl-add{display:inline-flex;gap:4px}
+.decl-add button{font-size:10px;padding:2px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;cursor:pointer;color:var(--text2);font-weight:500}
+.decl-add button:hover{background:var(--blue-light);color:var(--blue);border-color:var(--blue)}
+.ns-diagram{border:2px solid var(--blue);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden}
+.ns-block{border-top:1px solid var(--blue);position:relative}
+.ns-bi{padding:5px 9px;font-size:12px;min-height:30px;display:flex;align-items:center;font-family:monospace}
+.ns-bi:hover{background:var(--blue-light)}
+.ns-if-hdr{background:var(--purple-light);border-top:1px solid var(--blue);display:flex;align-items:center;justify-content:center;padding:5px 9px;font-size:12px;font-family:monospace}
+.ns-if-hdr:hover{background:#e0dcff}
+.ns-if-hdr input{background:transparent;border:none;font-style:italic;color:#3C3489;font-size:12px;font-family:monospace;text-align:center;width:100%;min-width:200px;flex:1}
+.if-body{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--blue)}
+.if-col{border-right:1px solid var(--blue);min-height:40px}
+.if-col:last-child{border-right:none}
+.if-lbl{font-size:11px;font-weight:700;padding:3px 7px;color:var(--purple);border-bottom:1px solid var(--blue);background:#f5f3ff;letter-spacing:0.3px;text-align:center}
+.sw-hdr{background:var(--amber-light);border-top:1px solid var(--blue);padding:5px 9px;font-size:12px;display:flex;align-items:center;font-family:monospace}
+.sw-hdr:hover{background:#ffe8c0}
+.sw-body{display:flex;border-top:1px solid var(--blue)}
+.sw-case{flex:1;border-right:1px solid var(--blue);min-height:40px}
+.sw-case:last-child{border-right:none}
+.sw-clbl{font-size:10px;padding:2px 6px;border-bottom:1px solid var(--blue);display:flex;align-items:center;gap:4px;background:#fff8f0;font-family:monospace}
+.sw-clbl input{flex:1;background:transparent;border:none;font-size:10px;color:var(--text);font-family:monospace}
+/* WHILE - azul #B8D9F5 */
+.lp-hdr{border-top:1px solid var(--blue);display:flex;align-items:center;padding:5px 9px;font-size:12px;background:#B8D9F5;font-family:monospace}
+.lp-hdr:hover{background:#A8CBEB}
+.lp-hdr input{background:transparent;border:none;font-size:12px;color:#0C447C;flex:1;font-family:monospace}
+.lp-tag{font-size:10px;font-weight:700;color:#0C447C;margin-right:7px;min-width:58px;letter-spacing:0.3px}
+.lp-body{min-height:28px;position:relative;padding-left:25px}
+.lp-body::before{content:'';position:absolute;top:0;left:0;width:20px;height:100%;border-top:20px solid #B8D9F5;border-left:20px solid #B8D9F5;pointer-events:none;box-sizing:border-box}
+/* FOR - lila #C5B5E8 */
+.for-hdr{background:#C5B5E8;display:flex;align-items:center;padding:5px 9px;font-size:12px;font-family:monospace;border-top:1px solid var(--blue)}
+.for-hdr input{color:#534AB7;background:transparent;border:none;font-size:12px;flex:1;font-family:monospace}
+.for-tag{color:#534AB7}
+.for-body{padding-left:25px;position:relative}
+.for-body::before{content:'';position:absolute;top:0;left:0;width:20px;height:100%;border-top:20px solid #C5B5E8;border-left:20px solid #C5B5E8;pointer-events:none;box-sizing:border-box}
+/* DO-WHILE - verde #D4ECC2 */
+.dw-body{min-height:28px;position:relative;padding-left:25px}
+.dw-body::before{content:'';position:absolute;top:0;left:0;width:20px;height:100%;border-left:20px solid #D4ECC2;pointer-events:none;box-sizing:border-box}
+.dw-hdr{display:none}
+.dw-ftr{padding:5px 9px;font-size:12px;background:#D4ECC2;display:flex;align-items:center;font-family:monospace;border-bottom:1px solid var(--blue)}
+.dw-ftr input{background:transparent;border:none;font-size:12px;color:#27500A;flex:1;font-family:monospace}
+.dw-tag{font-size:10px;font-weight:400;color:#27500A;margin-right:7px;min-width:75px;letter-spacing:0.3px}
+.io-e{background:#ffe8f0}.io-s{background:#e8fff5}.b-call{background:#fdf0f7}.b-ret{background:#fffbea}
+.b-instr{background:#fffbea}
+.b-com{background:#f7f7f7;font-style:italic;color:var(--text2)}
+.b-instr{background:#fff9e6}
+.empty-diag{color:var(--text3);font-size:12px;text-align:center;padding:22px 12px}
+
+/* ── ZONES ── */
+.zone-bar{display:flex;align-items:center;justify-content:center;padding:3px 8px;cursor:pointer;font-size:10px;color:transparent;min-height:10px;border-top:1.5px dashed transparent;transition:all 0.12s;font-weight:500}
+.zone-bar:hover{min-height:24px;color:var(--blue);border-top-color:var(--blue);background:var(--blue-light)}
+.zone-bar.zactive{min-height:24px;color:var(--blue);border-top-color:var(--blue);background:var(--blue-mid)}
+body.presentation-mode .zone-bar:hover{min-height:10px;color:transparent;border-top-color:transparent;background:transparent}
+
+/* ── BLOCK ACTIONS ── */
+.bacts{display:none;gap:2px;margin-left:6px;flex-shrink:0}
+.ns-bi:hover .bacts,.ns-if-hdr:hover .bacts,.lp-hdr:hover .bacts,.sw-hdr:hover .bacts,.dw-hdr:hover .bacts{display:flex}
+.ba{font-size:10px;padding:2px 6px;border:0.5px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;color:var(--text2);white-space:nowrap;transition:all 0.1s}
+.ba:hover{background:var(--bg2);color:var(--text)}
+.ba.del{color:var(--red)}.ba.del:hover{background:#fff0f0;border-color:var(--red)}
+.ba.mov{color:var(--blue);border-color:#aabbdd}.ba.mov:hover{background:var(--blue-light)}
+.ba.cop{color:var(--green);border-color:#aaccbb}.ba.cop:hover{background:var(--green-light)}
+.ba.mov.marked{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ba.cop.marked{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── RIGHT SIDEBAR ── */
+.sidebar-right{background:var(--bg2);border-left:0.5px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.ps-hdr{padding:8px 10px;font-size:11px;font-weight:700;color:#fff;background:var(--blue);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;letter-spacing:0.3px}
+.ps-body{padding:7px}
+.bb{width:100%;padding:6px 9px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);cursor:pointer;text-align:left;font-size:11px;color:var(--text);display:flex;align-items:center;gap:7px;transition:all 0.1s}
+.bb:hover{background:var(--blue-mid);border-color:var(--blue);color:var(--blue)}
+.bb:last-child{margin-bottom:0}
+.bbb{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;min-width:22px;text-align:center;letter-spacing:0.3px}
+.bb-e{background:#ffe8f0;color:#993556}.bb-s{background:#e8fff5;color:#27500A}
+.bb-i{background:#fffbea;color:#633806}.bb-c{background:#f5f5f5;color:#5F5E5A}
+.bb-if{background:var(--purple-light);color:#3C3489}.bb-sw{background:var(--amber-light);color:#854F0B}
+.bb-wh{background:var(--green-light);color:#085041}.bb-dw{background:#EAF3DE;color:#27500A}.bb-fo{background:#E6F1FB;color:#0C447C}
+.bb-ca{background:#fdf0f7;color:#72243E}.bb-re{background:#fffbea;color:#633806}
+
+/* ── INFO BOX ── */
+.info-box{padding:9px 10px;font-size:11px;margin:6px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);flex-shrink:0}
+.info-title{font-weight:600;color:var(--text);margin-bottom:3px;font-size:11px}
+.info-body{color:var(--text2);font-size:11px;line-height:1.5}
+.info-box.mode-insert{background:var(--blue-light);border-color:var(--blue)}
+.info-box.mode-insert .info-title{color:var(--blue)}
+.info-box.mode-move{background:#fff8e6;border-color:#BA7517}
+.info-box.mode-move .info-title{color:var(--amber)}
+.info-box.mode-copy{background:var(--green-light);border-color:#1D9E75}
+.info-box.mode-copy .info-title{color:var(--green)}
+.cancel-btn{margin:0 6px 8px;font-size:11px;padding:5px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;cursor:pointer;color:var(--text2);font-weight:500}
+.cancel-btn:hover{background:var(--bg);color:var(--text)}
+.spacer{flex:1}
+
+/* ── FOOTER ── */
+.app-footer{grid-column:1/-1;display:flex;align-items:center;justify-content:center;padding:5px;background:#0f2550;font-size:10px;color:rgba(255,255,255,0.4);gap:16px;flex-shrink:0}
+
+/* ── PRESENTATION MODE ── */
+body.presentation-mode .zone-bar{display:none !important}
+body.presentation-mode .bacts{display:none !important}
+body.presentation-mode .diagram-area{padding:8px}
+body.presentation-mode .ns-bi{padding:3px 9px;min-height:24px}
+body.presentation-mode .decl-row{padding:2px 8px}
+body.presentation-mode .mhtitle{padding:4px 10px}
+body.presentation-mode .sidebar-right{display:none}
+body.presentation-mode .app{grid-template-columns:200px 1fr}
+body.hide-comments .b-com{display:none !important}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <span class="logo">NS<span>+</span>Gen</span>
+  <button onclick="clearMethod()">Limpiar método</button>
+  <button onclick="saveProject()">💾 Guardar</button>
+  <button onclick="document.getElementById('load-input').click()">📂 Cargar</button>
+  <input type="file" id="load-input" accept=".nsgen" style="display:none" onchange="loadProject(this)">
+  <button onclick="showHistoryPanel()">📜 Historial</button>
+  <button onclick="exportDiagram()">Exportar .txt</button>
+  <button onclick="validateAll()" style="background:rgba(255,200,50,0.15);border-color:rgba(255,200,50,0.4)">✓ Validar</button>
+  <div class="topbar-sep"></div>
+  <button class="view-tab active" id="vt-v" onclick="setView('visual')">Diagrama</button>
+  <button class="view-tab" id="vt-c" onclick="setView('code')">Código</button>
+  <button class="view-tab" id="vt-pres" onclick="togglePresentation()" style="margin-left:8px">📽 Presentación</button>
+  <button class="view-tab" id="vt-comm" onclick="toggleComments()" style="display:none">💬 Comentarios</button>
+</div>
+
+<div class="sidebar-left">
+  <div class="slh"><span>Métodos</span><button onclick="showAddMethod()">+ Nuevo</button></div>
+  <div id="methodList"></div>
+  <div class="spacer"></div>
+</div>
+
+<div class="center">
+  <div class="tabs-row" id="tabsRow"></div>
+  <div id="viewVisual" style="flex:1;overflow:auto;display:flex;flex-direction:column">
+    <div class="diagram-area" id="diagramArea"></div>
+  </div>
+  <div id="viewCode" class="code-panel" style="display:none">
+    <div class="code-lang-tabs">
+      <button class="clt active ns" id="clt-ns" onclick="setLang('ns')">NS+ Code</button>
+      <button class="clt java" id="clt-java" onclick="setLang('java')">Java</button>
+      <button class="clt python" id="clt-python" onclick="setLang('python')">Python</button>
+      <button class="clt" id="clt-ascii" onclick="setLang('ascii')" style="color:#56d364">ASCII Art</button>
+    </div>
+    <div class="code-copy-bar">
+      <button onclick="toggleLineNumbers()" id="line-num-btn" style="margin-right:8px">🔢 Numeración</button>
+      <button onclick="copyCode()">Copiar código</button>
+    </div>
+    <div class="code-block ns" id="codeBlock"></div>
+  </div>
+</div>
+
+<div class="sidebar-right">
+  <div>
+    <div class="ps-hdr" onclick="toggleSec('es')">Entrada / Salida <span id="arr-es">▾</span></div>
+    <div class="ps-body" id="body-es">
+      <button class="bb" onclick="insertBlock('E')"><span class="bbb bb-e">E</span> Entrada (INPUT)</button>
+      <button class="bb" onclick="insertBlock('S')"><span class="bbb bb-s">S</span> Salida (OUTPUT)</button>
+    </div>
+  </div>
+  <div>
+    <div class="ps-hdr" onclick="toggleSec('bl')">Bloques <span id="arr-bl">▾</span></div>
+    <div class="ps-body" id="body-bl">
+      <button class="bb" onclick="insertBlock('INSTR')"><span class="bbb bb-i">I</span> Instrucción</button>
+      <button class="bb" onclick="insertBlock('ASIG')"><span class="bbb bb-i">←</span> Asignación</button>
+      <button class="bb" onclick="insertBlock('COMMENT')"><span class="bbb bb-c">/*</span> Comentario</button>
+    </div>
+  </div>
+  <div>
+    <div class="ps-hdr" onclick="toggleSec('sel')">Selección <span id="arr-sel">▾</span></div>
+    <div class="ps-body" id="body-sel">
+      <button class="bb" onclick="insertBlock('IF')"><span class="bbb bb-if">IF</span> Si / No</button>
+      <button class="bb" onclick="insertBlock('SWITCH')"><span class="bbb bb-sw">SW</span> Según (SWITCH)</button>
+    </div>
+  </div>
+  <div>
+    <div class="ps-hdr" onclick="toggleSec('rep')">Repetición <span id="arr-rep">▾</span></div>
+    <div class="ps-body" id="body-rep">
+      <button class="bb" onclick="insertBlock('WHILE')"><span class="bbb bb-wh">WH</span> Mientras (WHILE)</button>
+      <button class="bb" onclick="insertBlock('DOWHILE')"><span class="bbb bb-dw">DO</span> Hacer-Mientras (DO)</button>
+      <button class="bb" onclick="insertBlock('FOR')"><span class="bbb bb-fo">FOR</span> Para (FOR)</button>
+      <button class="bb" onclick="insertBlock('FOREACH')"><span class="bbb bb-fo">FE</span> Para cada (FOREACH)</button>
+    </div>
+  </div>
+  <div>
+    <div class="ps-hdr" onclick="toggleSec('fn')">Funciones / Métodos <span id="arr-fn">▾</span></div>
+    <div class="ps-body" id="body-fn">
+      <button class="bb" onclick="insertBlock('CALL')"><span class="bbb bb-ca">⇒</span> Llamada</button>
+      <button class="bb" onclick="insertBlock('RETURN')"><span class="bbb bb-re">↩</span> Return</button>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div id="infoBox" class="info-box">
+    <div class="info-title" id="infoTitle">Zona de inserción</div>
+    <div class="info-body" id="infoBody">Líneas punteadas = zonas. Clic para activar. En cada bloque: ✂ mover, ⎘ copiar.</div>
+  </div>
+  <button class="cancel-btn" id="cancelBtn" style="display:none" onclick="cancelMode()">Cancelar operación</button>
+</div>
+
+<div class="app-footer">
+  <span>NS+Gen v3.0 — Generador de Diagramas Nassi-Schneidermann</span>
+  <span>·</span>
+  <span>Creado por Daniel</span>
+  <span>·</span>
+  <span>ORT Argentina · Analista de Sistemas 2026</span>
+  <span>·</span>
+  <span title="Licencia MIT - Código Abierto">📄 MIT License</span>
+  <span>·</span>
+  <span>Funciona 100% offline</span>
+  <span>·</span>
+  <button onclick="toggleTheme()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:3px 8px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:14px" title="Cambiar tema"><span id="theme-icon">🌙</span></button>
+</div>
+
+</div>
+
+<script>
+let methods=[];
+let activeMethodId=null;
+let idC=300;
+let collapsedSecs={};
+let currentView='visual';
+let currentLang='ns';
+let activeZone=null;
+let mode='insert';
+let pendingBlockId=null;
+let presentationMode=false;
+let showComments=true;
+let autoSaveTimer=null;
+let darkTheme=false;
+let showLineNumbers=false;
+const HISTORY_LIMIT=10;
+const AUTOSAVE_INTERVAL=30000; // 30 seconds
+
+function mid(){return idC++;}
+function getActive(){return methods.find(m=>m.id===activeMethodId);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function setView(v){
+  currentView=v;
+  document.getElementById('viewVisual').style.display=v==='visual'?'flex':'none';
+  document.getElementById('viewCode').style.display=v==='code'?'flex':'none';
+  document.getElementById('vt-v').classList.toggle('active',v==='visual');
+  document.getElementById('vt-c').classList.toggle('active',v==='code');
+  if(v==='code') renderCodeView();
+}
+
+function setLang(lang){
+  currentLang=lang;
+  ['ns','java','python','ascii'].forEach(l=>{
+    let el=document.getElementById('clt-'+l);
+    if(el) el.classList.toggle('active',l===lang);
+  });
+  let cb=document.getElementById('codeBlock');
+  cb.className='code-block '+(lang==='ascii'?'ns':lang);
+  renderCodeView();
+}
+
+function toggleSec(s){
+  collapsedSecs[s]=!collapsedSecs[s];
+  let b=document.getElementById('body-'+s),a=document.getElementById('arr-'+s);
+  if(b) b.style.display=collapsedSecs[s]?'none':'block';
+  if(a) a.textContent=collapsedSecs[s]?'▸':'▾';
+}
+
+function cancelMode(){mode='insert';pendingBlockId=null;activeZone=null;render();}
+
+function showAddMethod(){
+  const isFirst = methods.length === 0;
+  let name = prompt(
+    isFirst ? 'Bienvenido a NS+Gen. Nombre de la clase:' : 'Nombre de la clase:',
+    ''
+  );
+  if(!name || !name.trim()) {
+    if(isFirst) {
+      alert('Necesitás crear al menos un método para comenzar.');
+      showAddMethod(); // retry
+    }
+    return;
+  }
+  
+  let sig = prompt('Firma del método (ej: calcular(int a, int b)):', '');
+  if(!sig || !sig.trim()) {
+    if(isFirst) {
+      alert('La firma del método es obligatoria.');
+      showAddMethod(); // retry
+    }
+    return;
+  }
+  
+  let ret = prompt('Tipo de retorno (void, int, String...):', 'void');
+  
+  methods.push({
+    id: mid(),
+    name: name.trim(),
+    sig: sig.trim(),
+    decls: [],
+    blocks: [],
+    returnType: (ret && ret.trim()) || 'void'
+  });
+  activeMethodId = methods[methods.length-1].id;
+  cancelMode();
+  render();
+  triggerSave(); // Save after creating method
+}
+
+function deleteMethod(id){
+  if(methods.length===1){alert('Debe haber al menos un método.');return;}
+  methods=methods.filter(m=>m.id!==id);
+  if(activeMethodId===id) activeMethodId=methods[0].id;
+  cancelMode();render();
+  triggerSave();
+}
+function activateMethod(id){activeMethodId=id;cancelMode();render();}
+
+function editMethodName(){
+  const m = getActive();
+  if(!m) return;
+  const newName = prompt('Nombre de la clase:', m.name);
+  if(newName && newName.trim()) {
+    m.name = newName.trim();
+    render();
+    triggerSave();
+  }
+}
+
+function editMethodSig(){
+  const m = getActive();
+  if(!m) return;
+  const newSig = prompt('Firma del método:', m.sig);
+  if(newSig && newSig.trim()) {
+    m.sig = newSig.trim();
+    render();
+    triggerSave();
+  }
+}
+
+function editMethodReturn(){
+  const m = getActive();
+  if(!m) return;
+  const newRet = prompt('Tipo de retorno:', m.returnType);
+  if(newRet && newRet.trim()) {
+    m.returnType = newRet.trim();
+    render();
+    triggerSave();
+  }
+}
+
+function addDecl(type){
+  let m=getActive(),label=type==='VAR'?'int nombre':type==='CONST'?'final int NOMBRE = valor':'int parametro';
+  m.decls.push({id:mid(),type,label});render();
+}
+function removeDecl(id){getActive().decls=getActive().decls.filter(d=>d.id!==id);render();}
+function updateDecl(id,val){let d=getActive().decls.find(x=>x.id===id);if(d)d.label=val;if(currentView==='code')renderCodeView();}
+
+function defBlock(type){
+  let b={id:mid(),type};
+  const defs={
+    IF:{cond:'condicion',thenBlocks:[],elseBlocks:[]},
+    SWITCH:{expr:'variable',cases:[{id:mid(),label:'1',blocks:[]},{id:mid(),label:'2',blocks:[]},{id:mid(),label:'default',blocks:[]}]},
+    WHILE:{cond:'condicion',bodyBlocks:[]},
+    DOWHILE:{cond:'condicion',bodyBlocks:[]},
+    FOR:{header:'i <- 1 , 10 , 1',bodyBlocks:[]},
+    FOREACH:{header:'Tipo var : coleccion',bodyBlocks:[]},
+    E:{label:'variable'},S:{label:'"texto"'},INSTR:{label:'instruccion'},
+    ASIG:{label:'variable = expresion'},COMMENT:{label:'comentario'},
+    CALL:{label:'metodo(args)'},RETURN:{label:'expresion'}
+  };
+  return Object.assign(b,defs[type]||{});
+}
+
+function deepClone(b){
+  let c=Object.assign({},b,{id:mid()});
+  if(c.thenBlocks) c.thenBlocks=c.thenBlocks.map(deepClone);
+  if(c.elseBlocks) c.elseBlocks=c.elseBlocks.map(deepClone);
+  if(c.bodyBlocks) c.bodyBlocks=c.bodyBlocks.map(deepClone);
+  if(c.cases) c.cases=c.cases.map(cas=>({...cas,id:mid(),blocks:cas.blocks.map(deepClone)}));
+  return c;
+}
+
+function findBlock(arr,id){
+  for(let b of arr){
+    if(b.id===id) return b;
+    let s=null;
+    if(b.thenBlocks) s=findBlock(b.thenBlocks,id);
+    if(!s&&b.elseBlocks) s=findBlock(b.elseBlocks,id);
+    if(!s&&b.bodyBlocks) s=findBlock(b.bodyBlocks,id);
+    if(!s&&b.cases) for(let c of b.cases){s=findBlock(c.blocks,id);if(s)break;}
+    if(s) return s;
+  }
+  return null;
+}
+
+function removeFromTree(arr,id){
+  for(let i=0;i<arr.length;i++){
+    if(arr[i].id===id) return arr.splice(i,1)[0];
+    let b=arr[i],s=null;
+    if(b.thenBlocks){s=removeFromTree(b.thenBlocks,id);if(s)return s;}
+    if(b.elseBlocks){s=removeFromTree(b.elseBlocks,id);if(s)return s;}
+    if(b.bodyBlocks){s=removeFromTree(b.bodyBlocks,id);if(s)return s;}
+    if(b.cases){for(let c of b.cases){s=removeFromTree(c.blocks,id);if(s)return s;}}
+  }
+  return null;
+}
+
+function isAncestor(m,ancId,tgtId){
+  let b=findBlock(m.blocks,ancId);if(!b)return false;
+  function search(arr){for(let x of arr){if(x.id===tgtId)return true;if(x.thenBlocks&&search(x.thenBlocks))return true;if(x.elseBlocks&&search(x.elseBlocks))return true;if(x.bodyBlocks&&search(x.bodyBlocks))return true;if(x.cases){for(let c of x.cases){if(search(c.blocks))return true;}}}return false;}
+  let inner=[];
+  if(b.thenBlocks)inner.push(...b.thenBlocks);if(b.elseBlocks)inner.push(...b.elseBlocks);
+  if(b.bodyBlocks)inner.push(...b.bodyBlocks);if(b.cases)for(let c of b.cases)inner.push(...c.blocks);
+  return search(inner);
+}
+
+function getZoneArray(m,zone){
+  if(!zone||zone.type==='root') return m.blocks;
+  let b=findBlock(m.blocks,zone.blockId);if(!b)return m.blocks;
+  if(zone.type==='if-then') return b.thenBlocks;
+  if(zone.type==='if-else') return b.elseBlocks;
+  if(zone.type==='loop') return b.bodyBlocks;
+  if(zone.type==='switch-case') return b.cases[zone.caseIdx]?.blocks||[];
+  return m.blocks;
+}
+
+function setZone(zone,e){
+  if(e) e.stopPropagation();
+  activeZone=zone;
+  if((mode==='move'||mode==='copy')&&pendingBlockId!==null){
+    let m=getActive();
+    if(mode==='move'&&zone.blockId&&isAncestor(m,pendingBlockId,zone.blockId)){alert('No podés mover un bloque dentro de sí mismo.');return;}
+    let arr=getZoneArray(m,zone);
+    let bp=mode==='move'?removeFromTree(m.blocks,pendingBlockId):deepClone(findBlock(m.blocks,pendingBlockId));
+    if(bp){let idx=zone.afterIdx!==undefined?zone.afterIdx+1:arr.length;arr.splice(idx,0,bp);}
+    cancelMode();return;
+  }
+  render();
+}
+
+function startMove(id,e){if(e)e.stopPropagation();mode='move';pendingBlockId=id;activeZone=null;render();}
+function startCopy(id,e){if(e)e.stopPropagation();mode='copy';pendingBlockId=id;activeZone=null;render();}
+
+function insertBlock(type){
+  if(mode!=='insert')return;
+  let m=getActive(),nb=defBlock(type),arr=getZoneArray(m,activeZone);
+  let idx=activeZone&&activeZone.afterIdx!==undefined?activeZone.afterIdx+1:arr.length;
+  arr.splice(idx,0,nb);render();
+}
+
+function deleteBlock(id){removeFromTree(getActive().blocks,id);cancelMode();}
+
+function moveBlock(id,dir){
+  let m=getActive();
+  function mv(arr){for(let i=0;i<arr.length;i++){if(arr[i].id===id){if(dir==='up'&&i>0){let t=arr[i];arr[i]=arr[i-1];arr[i-1]=t;return true;}if(dir==='dn'&&i<arr.length-1){let t=arr[i];arr[i]=arr[i+1];arr[i+1]=t;return true;}return false;}let b=arr[i];if(b.thenBlocks&&mv(b.thenBlocks))return true;if(b.elseBlocks&&mv(b.elseBlocks))return true;if(b.bodyBlocks&&mv(b.bodyBlocks))return true;if(b.cases){for(let c of b.cases){if(mv(c.blocks))return true;}}}return false;}
+  mv(m.blocks);render();
+}
+
+function updateField(id,field,val){
+  let b=findBlock(getActive().blocks,id);if(b)b[field]=val;
+  if(currentView==='code')renderCodeView();
+}
+
+function addSwitchCase(id){
+  let b=findBlock(getActive().blocks,id);
+  if(b&&b.cases)b.cases.push({id:mid(),label:'caso',blocks:[]});render();
+}
+
+function zoneBar(zone,label){
+  let isAct=activeZone&&JSON.stringify(activeZone)===JSON.stringify(zone);
+  let isMC=mode==='move'||mode==='copy';
+  let zs=JSON.stringify(zone).replace(/"/g,"'");
+  let cls='zone-bar'+(isAct?' zactive':'');
+  let txt=isMC?(isAct?'Pegar aquí':'Enviar aquí →'):(isAct?'+ insertar aquí':'+ '+label);
+  let hoverStyle=isMC?'background:#fff8e6;color:#854F0B;border-top-color:#BA7517':'';
+  return `<div class="${cls}" onmouseenter="if(!this.classList.contains('zactive')){this.style.cssText='min-height:24px;${hoverStyle}'}" onmouseleave="if(!this.classList.contains('zactive')){this.style.cssText=''}" onclick="setZone(${zs},event)">${txt}</div>`;
+}
+
+function bacts(id,extra){
+  let mCls=`ba mov${mode==='move'&&pendingBlockId===id?' marked':''}`;
+  let cCls=`ba cop${mode==='copy'&&pendingBlockId===id?' marked':''}`;
+  return `<div class="bacts">
+    <button class="ba" onclick="moveBlock(${id},'up');event.stopPropagation()">▲</button>
+    <button class="ba" onclick="moveBlock(${id},'dn');event.stopPropagation()">▼</button>
+    <button class="${mCls}" onclick="startMove(${id},event)">✂ mover</button>
+    <button class="${cCls}" onclick="startCopy(${id},event)">⎘ copiar</button>
+    <button class="ba del" onclick="deleteBlock(${id});event.stopPropagation()">✕</button>
+    ${extra||''}
+  </div>`;
+}
+
+function rBlocks(arr,zt,bId,cIdx){
+  if(!arr||arr.length===0){
+    let z={type:zt,blockId:bId,caseIdx:cIdx};
+    return `<div class="empty-diag">— vacío —</div>${presentationMode?'':zoneBar(z,'aquí')}`;
+  }
+  let h='';
+  for(let i=0;i<arr.length;i++){
+    h+=rBlock(arr[i],zt,bId,cIdx,i);
+    if(!presentationMode) h+=zoneBar({type:zt,blockId:bId,caseIdx:cIdx,afterIdx:i},'después');
+  }
+  return h;
+}
+
+function rBlock(b,zt,bId,cIdx,i){
+  let id=b.id,hl=mode!=='insert'&&pendingBlockId===id?'outline:2px solid #BA7517;':'';
+  if(b.type==='IF') return `<div class="ns-block"><div class="ns-if-hdr" onclick="event.stopPropagation()"><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="if-body"><div class="if-col"><div class="if-lbl">V</div><div>${rBlocks(b.thenBlocks,'if-then',id,null)}</div></div><div class="if-col"><div class="if-lbl">F</div><div>${rBlocks(b.elseBlocks,'if-else',id,null)}</div></div></div></div>`;
+  if(b.type==='SWITCH'){
+    let cases=b.cases.map((c,ci)=>`<div class="sw-case"><div class="sw-clbl"><input value="${esc(c.label)}" onchange="let m=getActive();let bl=findBlock(m.blocks,${id});if(bl)bl.cases[${ci}].label=this.value;if(currentView==='code')renderCodeView();" onclick="event.stopPropagation()"/>${b.cases.length>2?`<button onclick="let m=getActive();let bl=findBlock(m.blocks,${id});if(bl&&bl.cases.length>2){bl.cases.splice(${ci},1);render();}event.stopPropagation()" style="font-size:9px;padding:0 3px;border:none;background:transparent;cursor:pointer;color:var(--red)">✕</button>`:''}</div><div>${rBlocks(c.blocks,'switch-case',id,ci)}</div></div>`).join('');
+    return `<div class="ns-block"><div class="sw-hdr" onclick="event.stopPropagation()"><span style="font-size:10px;font-weight:700;color:#854F0B;margin-right:6px">SWITCH</span><input value="${esc(b.expr)}" onchange="updateField(${id},'expr',this.value)" onclick="event.stopPropagation()" style="flex:1;background:transparent;border:none;font-size:12px;color:var(--text);font-family:monospace"/>${bacts(id,`<button class="ba" onclick="addSwitchCase(${id});event.stopPropagation()" style="color:#854F0B;border-color:#BA7517">+caso</button>`)}</div><div class="sw-body">${cases}</div></div>`;
+  }
+  if(b.type==='WHILE') return `<div class="ns-block"><div class="lp-hdr" onclick="event.stopPropagation()"><span class="lp-tag">WHILE</span><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="lp-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div></div>`;
+  if(b.type==='DOWHILE') return `<div class="ns-block"><div class="dw-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div><div class="dw-ftr" onclick="event.stopPropagation()"><span class="dw-tag">DO WHILE</span><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div></div>`;
+  if(b.type==='FOR'||b.type==='FOREACH'){
+    let tag=b.type==='FOR'?'FOR':'FOR-EACH';
+    return `<div class="ns-block"><div class="lp-hdr for-hdr" onclick="event.stopPropagation()"><span class="lp-tag for-tag">${tag}</span><input value="${esc(b.header)}" onchange="updateField(${id},'header',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="lp-body for-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div></div>`;
+  }
+  let bg='',badge='';
+  if(b.type==='E'){bg='io-e';badge='<span style="font-size:10px;font-weight:700;color:#993556;margin-right:5px;min-width:18px">E:</span>';}
+  else if(b.type==='S'){bg='io-s';badge='<span style="font-size:10px;font-weight:700;color:#27500A;margin-right:5px;min-width:18px">S:</span>';}
+  else if(b.type==='INSTR'){bg='b-instr';badge='';}
+  else if(b.type==='ASIG'){bg='';badge='';}
+  else if(b.type==='CALL'){bg='b-call';badge='<span style="font-size:10px;color:#72243E;margin-right:5px;min-width:18px">⇒</span>';}
+  else if(b.type==='RETURN'){bg='b-ret';badge='<span style="font-size:10px;color:#633806;margin-right:5px;min-width:18px">↩</span>';}
+  else if(b.type==='COMMENT'){bg='b-com';badge='<span style="font-size:10px;color:#888;margin-right:5px;min-width:18px">//</span>';}
+  return `<div class="ns-block ${bg}" style="${hl}"><div class="ns-bi">${badge}<input value="${esc(b.label||'')}" onchange="updateField(${id},'label',this.value)" onclick="event.stopPropagation()" style="flex:1;border:none;background:transparent;font-size:12px;color:var(--text);padding:0;cursor:text;font-family:monospace"/>${bacts(id)}</div></div>`;
+}
+
+function renderMethodList(){
+  const html = methods.length > 0 
+    ? methods.map(m=>`<div class="method-item ${m.id===activeMethodId?'active':''}" onclick="activateMethod(${m.id})"><div class="mname">${esc(m.name)}</div><div class="msub">${esc(m.sig)}</div><div class="macts"><button onclick="event.stopPropagation();deleteMethod(${m.id})">✕ Eliminar</button></div></div>`).join('')
+    : '<div style="padding:16px;text-align:center;color:var(--text3);font-size:11px">Sin métodos<br>Creá uno con el botón + Nuevo</div>';
+  document.getElementById('methodList').innerHTML = html;
+}
+
+function renderTabs(){
+  const tabs = methods.length > 0
+    ? methods.map(m=>`<button class="tab ${m.id===activeMethodId?'active':''}" onclick="activateMethod(${m.id})">${esc(m.name)}: ${esc(m.sig)}</button>`).join('')+`<button class="tab add-tab" onclick="showAddMethod()">+</button>`
+    : `<button class="tab add-tab" onclick="showAddMethod()">+ Crear método</button>`;
+  document.getElementById('tabsRow').innerHTML = tabs;
+}
+
+function renderDiagram(){
+  if(methods.length === 0) {
+    document.getElementById('diagramArea').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:14px">Sin métodos — creá uno para comenzar</div>';
+    return;
+  }
+  let m=getActive();
+  if(!m) {
+    document.getElementById('diagramArea').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:14px">Método no encontrado</div>';
+    return;
+  }
+  let decls=m.decls.length>0?m.decls.map(d=>`<div class="decl-row"><span class="dbadge badge-${d.type.toLowerCase()}">${d.type}</span><input value="${esc(d.label)}" onchange="updateDecl(${d.id},this.value)" style="border:none;background:transparent;font-size:11px;color:var(--text);font-family:monospace;width:auto;min-width:120px"/><button class="del-d" onclick="removeDecl(${d.id})">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 9px;font-style:italic">sin declaraciones — usá los botones para agregar</div>';
+  let rootZone = presentationMode ? '' : zoneBar({type:'root',blockId:null,caseIdx:null},'zona principal');
+  let blocks=m.blocks.length===0?`<div class="empty-diag">Activá una zona y elegí un bloque del panel derecho</div>${rootZone}`:rBlocks(m.blocks,'root',null,null);
+  
+  // Build header with edit buttons (hidden in presentation mode)
+  const editBtns = presentationMode ? '' : `
+    <div style="display:inline-flex;gap:3px;margin-left:8px;opacity:0.6" class="method-edit-btns">
+      <button onclick="editMethodName()" style="font-size:9px;padding:2px 5px;border:0.5px solid rgba(255,255,255,0.3);border-radius:3px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer" title="Editar nombre de clase">✏ Clase</button>
+      <button onclick="editMethodSig()" style="font-size:9px;padding:2px 5px;border:0.5px solid rgba(255,255,255,0.3);border-radius:3px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer" title="Editar firma">✏ Firma</button>
+      <button onclick="editMethodReturn()" style="font-size:9px;padding:2px 5px;border:0.5px solid rgba(255,255,255,0.3);border-radius:3px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer" title="Editar tipo de retorno">✏ Retorno</button>
+    </div>`;
+  
+  document.getElementById('diagramArea').innerHTML=`<div class="mhbox"><div class="mhtitle">${esc(m.name)} → ${esc(m.sig)} : ${esc(m.returnType)}${editBtns}</div><div class="decl-section">${decls}<div class="decl-add"><button onclick="addDecl('VAR')">+ VAR</button><button onclick="addDecl('CONST')">+ CONST</button><button onclick="addDecl('PARAM')">+ PARAM</button></div></div></div><div class="ns-diagram">${blocks}</div>`;
+}
+
+function parseForHeader(h){
+  let parts=h.split(',').map(s=>s.trim());
+  if(parts.length===3){
+    let init=parts[0].replace('<-','=').replace('←','=').trim();
+    let limitRaw=parts[1].trim();
+    let step=parts[2].trim();
+    let varName=init.split(/[=\s]/)[0].trim().split(/\s+/).pop();
+    return {init,limit:`${varName} <= ${limitRaw}`,update:`${varName} += ${step}`,varName};
+  }
+  return {init:h,limit:'',update:'',varName:'i'};
+}
+
+function parseForeachHeader(h){
+  let m=h.match(/(\S+)\s+(\w+)\s*:\s*(.+)/);
+  if(m) return {type:m[1],varName:m[2],collection:m[3]};
+  return {type:'var',varName:'item',collection:h};
+}
+
+function parseAsig(label){return label.replace('←','=').replace('<-','=');}
+
+function genNS(m){
+  function bc(b,ind){
+    if(b.type==='E') return `${ind}INPUT ${b.label}\n`;
+    if(b.type==='S') return `${ind}OUTPUT ${b.label}\n`;
+    if(b.type==='INSTR'||b.type==='ASIG') return `${ind}INSTR ${b.label}\n`;
+    if(b.type==='COMMENT') return `${ind}/** ${b.label} */\n`;
+    if(b.type==='CALL') return `${ind}CALL ${b.label}\n`;
+    if(b.type==='RETURN') return `${ind}RETURN ${b.label}\n`;
+    if(b.type==='IF'){let c=`${ind}IF ${b.cond}\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'  ')).join('');c+=`${ind}ELSE\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'  ')).join('');return c+`${ind}ENDIF\n`;}
+    if(b.type==='SWITCH'){let c=`${ind}SWITCH ${b.expr}\n`;b.cases.forEach(cas=>{c+=`${ind}CASE ${cas.label}\n`;c+=cas.blocks.map(x=>bc(x,ind+'  ')).join('');});return c+`${ind}ENDSWITCH\n`;}
+    if(b.type==='WHILE'){return `${ind}WHILE ${b.cond}\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}ENDWHILE\n`;}
+    if(b.type==='DOWHILE'){return `${ind}DOWHILE\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}UNTIL ${b.cond}\n`;}
+    if(b.type==='FOR'){return `${ind}FOR ${b.header}\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}ENDFOR\n`;}
+    if(b.type==='FOREACH'){return `${ind}FOREACH ${b.header}\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}ENDFOREACH\n`;}
+    return '';
+  }
+  let d=m.decls.map(d=>(d.type==='VAR'?'VAR ':d.type==='CONST'?'CONST ':'PARAM ')+d.label+'\n').join('');
+  return `${m.name}\n  ${m.sig}\n\n${d}${m.blocks.map(b=>bc(b,'  ')).join('')}`;
+}
+
+function genJava(m){
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
+  
+  // Check if there are any INPUT blocks in the entire tree
+  function hasInput(blocks){
+    for(const b of (blocks||[])){
+      if(b.type==='E') return true;
+      if(hasInput(b.thenBlocks)) return true;
+      if(hasInput(b.elseBlocks)) return true;
+      if(hasInput(b.bodyBlocks)) return true;
+      if(b.cases) for(const c of b.cases) if(hasInput(c.blocks)) return true;
+    }
+    return false;
+  }
+  const needsScanner = hasInput(m.blocks);
+  
+  // CONST → static final class attributes
+  let constAttrs=m.decls.filter(d=>d.type==='CONST')
+    .map(d=>`    private static final ${d.label};`).join('\n');
+  
+  // Add Scanner as static attribute if needed
+  if(needsScanner){
+    constAttrs = constAttrs 
+      ? constAttrs + '\n    private static Scanner input = new Scanner(System.in);'
+      : '    private static Scanner input = new Scanner(System.in);';
+  }
+  
+  // VAR → local variables inside method only
+  let localVars=m.decls.filter(d=>d.type==='VAR')
+    .map(d=>`        ${d.label};`).join('\n');
+    
+  function bc(b,ind){
+    if(b.type==='E') return `${ind}${b.label} = input.nextLine(); // INPUT\n`;
+    if(b.type==='S') return `${ind}System.out.println(${b.label});\n`;
+    if(b.type==='INSTR') return `${ind}${b.label};\n`;
+    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
+    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
+    if(b.type==='CALL') return `${ind}${b.label};\n`;
+    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
+    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
+    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
+    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
+    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for (${p.type} ${p.varName} : ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    return '';
+  }
+  
+  let body=m.blocks.map(b=>bc(b,'        ')).join('');
+  
+  // Add scanner close at end if needed
+  if(needsScanner) body += '        input.close();\n';
+  
+  return `public class ${m.name} {\n${constAttrs?constAttrs+'\n':''}\n    public ${m.returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n}\n`;
+}
+
+function genPython(m){
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{let parts=d.label.trim().split(/\s+/);return parts.length>=2?parts[1]:parts[0];}).join(', ');
+  let methodName=m.sig.replace(/\(.*\)/,'').trim();
+  function pyType(jt){const map={int:'int',float:'float',double:'float',boolean:'bool',String:'str',long:'int',char:'str'};return map[jt]||jt;}
+  function parseVar(decl){let parts=decl.trim().split(/\s+/);if(parts.length>=2){let t=pyType(parts[0]),n=parts[1].replace(/;$/,'');let val=parts.includes('=')?parts.slice(parts.indexOf('=')+1).join(' ').replace(/;$/,''):'None';return{name:n,type:t,val};}return{name:decl,type:'',val:'None'};}
+  function bc(b,ind){
+    if(b.type==='E'){let v=b.label.trim().split(/\s+/).pop();return `${ind}${v} = input()  # INPUT ${b.label}\n`;}
+    if(b.type==='S') return `${ind}print(${b.label})\n`;
+    if(b.type==='INSTR') return `${ind}${b.label}\n`;
+    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)}\n`;
+    if(b.type==='COMMENT') return `${ind}# ${b.label}\n`;
+    if(b.type==='CALL') return `${ind}${b.label.replace(';','')}\n`;
+    if(b.type==='RETURN') return `${ind}return ${b.label}\n`;
+    if(b.type==='IF'){let c=`${ind}if ${b.cond}:\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');if(b.elseBlocks.length>0){c+=`${ind}else:\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');}return c;}
+    if(b.type==='SWITCH'){let c=`${ind}# SWITCH ${b.expr}\n`;b.cases.forEach((cas,ci)=>{c+=ci===0?`${ind}if ${b.expr} == ${cas.label}:\n`:(cas.label==='default'?`${ind}else:\n`:`${ind}elif ${b.expr} == ${cas.label}:\n`);let body=cas.blocks.map(x=>bc(x,ind+'    ')).join('');c+=body||`${ind}    pass\n`;});return c;}
+    if(b.type==='WHILE'){return `${ind}while ${b.cond}:\n`+(b.bodyBlocks.length>0?b.bodyBlocks.map(x=>bc(x,ind+'    ')).join(''):`${ind}    pass\n`);}
+    if(b.type==='DOWHILE'){let body=b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('');return `${ind}while True:\n${body}${ind}    if not (${b.cond}):\n${ind}        break\n`;}
+    if(b.type==='FOR'){let p=parseForHeader(b.header);let parts=p.init.split(/[=\s]+/);let vn=parts.length>=2?parts[parts.length-2]:p.varName;let start=parts[parts.length-1];let limitParts=p.limit.split(/<=|</).map(s=>s.trim());let end=limitParts[limitParts.length-1];let step=p.update.includes('+=')?p.update.split('+=')[1].trim():'1';return `${ind}for ${vn} in range(${start}, ${end}+1, ${step}):\n`+(b.bodyBlocks.length>0?b.bodyBlocks.map(x=>bc(x,ind+'    ')).join(''):`${ind}    pass\n`);}
+    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for ${p.varName} in ${p.collection}:\n`+(b.bodyBlocks.length>0?b.bodyBlocks.map(x=>bc(x,ind+'    ')).join(''):`${ind}    pass\n`);}
+    return '';
+  }
+  // CONST → module-level constants only
+  let consts=m.decls.filter(d=>d.type==='CONST').map(d=>{
+    let label=d.label.replace(/^final\s+/i,'');
+    let v=parseVar(label);
+    return `${v.name}: ${v.type} = ${v.val}`;
+  }).join('\n');
+  // VAR → typed local variables inside method only
+  let localVars=m.decls.filter(d=>d.type==='VAR').map(d=>{
+    let v=parseVar(d.label);
+    return `        ${v.name}: ${v.type} = ${v.val}`;
+  }).join('\n');
+  let body=m.blocks.map(b=>bc(b,'        ')).join('');
+  let retHint=m.returnType==='void'?'None':pyType(m.returnType);
+  return `${consts?consts+'\n\n':''}class ${m.name}:\n    def ${methodName}(${params?'self, '+params:'self'}) -> ${retHint}:\n${localVars?localVars+'\n':''}${body||'        pass\n'}`;
+}
+
+function toggleLineNumbers(){
+  showLineNumbers = !showLineNumbers;
+  const btn = document.getElementById('line-num-btn');
+  if(btn) btn.style.opacity = showLineNumbers ? '1' : '0.6';
+  renderCodeView();
+}
+
+function renderCodeView(){
+  let saved=activeMethodId;
+  let allNS    =methods.map(m=>{activeMethodId=m.id;return `--- ${m.name}: ${m.sig} ---\n`+genNS(m);}).join('\n');
+  let allJava  =methods.map(m=>{activeMethodId=m.id;return genJava(m);}).join('\n\n');
+  let allPython=methods.map(m=>{activeMethodId=m.id;return genPython(m);}).join('\n\n');
+  let allASCII =methods.map(m=>{activeMethodId=m.id;return genASCII(m);}).join('\n\n');
+  activeMethodId=saved;
+  
+  let content = '';
+  if(currentLang==='ns')         content = allNS;
+  else if(currentLang==='java')  content = allJava;
+  else if(currentLang==='ascii') content = allASCII;
+  else                           content = allPython;
+  
+  // Add line numbers if enabled
+  if(showLineNumbers){
+    const lines = content.split('\n');
+    const maxDigits = String(lines.length).length;
+    content = lines.map((line, i) => {
+      const num = String(i + 1).padStart(maxDigits, ' ');
+      return `${num}  ${line}`;
+    }).join('\n');
+  }
+  
+  document.getElementById('codeBlock').textContent = content;
+}
+
+function copyCode(){
+  navigator.clipboard.writeText(document.getElementById('codeBlock').textContent)
+    .then(()=>{
+      let btn=document.querySelector('.code-copy-bar button');
+      btn.textContent='¡Copiado!';
+      setTimeout(()=>btn.textContent='Copiar código',1500);
+    });
+}
+
+function clearMethod(){
+  if(!confirm('¿Limpiar el método actual?')) return;
+  let m=getActive();m.blocks=[];m.decls=[];cancelMode();
+  triggerSave();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ASCII ART ENGINE
+// ═══════════════════════════════════════════════════════
+
+function genASCII(m){
+  const MIN_W = 40;
+
+  function rep(ch,n){ return ch.repeat(Math.max(0,n)); }
+  function pad(s,w){ s=String(s||''); return s.length>=w?s.substring(0,w):s+rep(' ',w-s.length); }
+  function center(s,w){ s=String(s||''); let l=Math.floor((w-s.length)/2),r=w-s.length-l; return rep(' ',l)+s+rep(' ',r); }
+  function lw(line){ return line.length; }
+
+  // Border characters by nesting depth
+  function borderChars(depth){
+    const styles = [
+      {v:'║',h:'═',tl:'╔',tr:'╗',bl:'╚',br:'╝',ml:'╠',mr:'╣',mt:'╦',mb:'╩',cross:'╬'}, // Level 0: double
+      {v:'│',h:'─',tl:'┌',tr:'┐',bl:'└',br:'┘',ml:'├',mr:'┤',mt:'┬',mb:'┴',cross:'┼'}, // Level 1: single
+      {v:'¦',h:'╌',tl:'╭',tr:'╮',bl:'╰',br:'╯',ml:'├',mr:'┤',mt:'┬',mb:'┴',cross:'┼'}  // Level 2+: dashed
+    ];
+    return styles[Math.min(depth,2)];
+  }
+
+  // Calculate minimum interior width needed for a block list
+  function calcW(blocks, min){
+    let w = min||MIN_W;
+    for(const b of (blocks||[])){
+      const texts=[];
+      if(b.type==='E')       texts.push('E: '+b.label);
+      if(b.type==='S')       texts.push('S: '+b.label);
+      if(b.type==='INSTR'||b.type==='ASIG') texts.push(b.label);
+      if(b.type==='COMMENT') texts.push('/* '+b.label+' */');
+      if(b.type==='CALL')    texts.push(b.label);
+      if(b.type==='RETURN')  texts.push('return '+b.label);
+      if(b.type==='IF')      texts.push('('+b.cond+')');
+      if(b.type==='SWITCH')  texts.push(b.expr);
+      if(b.type==='WHILE')   texts.push('WHILE ('+b.cond+')');
+      if(b.type==='DOWHILE') texts.push('DO WHILE ('+b.cond+')');
+      if(b.type==='FOR'||b.type==='FOREACH') texts.push('FOR ('+b.header+')');
+      for(const t of texts) w=Math.max(w,t.length+4);
+
+      if(b.bodyBlocks) w=Math.max(w,calcW(b.bodyBlocks,min));
+      if(b.thenBlocks) w=Math.max(w,calcW(b.thenBlocks,min));
+      if(b.elseBlocks) w=Math.max(w,calcW(b.elseBlocks,min));
+      if(b.cases){
+        const n=b.cases.length||1;
+        let cw=0;
+        for(const c of b.cases){
+          cw=Math.max(cw,calcW(c.blocks,8));
+          cw=Math.max(cw,(c.label||'').length+4);
+        }
+        w=Math.max(w,cw*n+(n-1)+2);
+      }
+      if(b.type==='IF'){
+        const tw=calcW(b.thenBlocks,MIN_W/2|0);
+        const ew=calcW(b.elseBlocks,MIN_W/2|0);
+        w=Math.max(w,tw+ew+3);
+      }
+    }
+    return w;
+  }
+
+  function row(s,w,d,prefix){
+    d=d||0;
+    prefix=prefix||'';
+    const bc=borderChars(d);
+    return prefix+bc.v+' '+pad(s,w-2-prefix.length)+' '+bc.v;
+  }
+  function HR(w,d,prefix){
+    d=d||0;
+    prefix=prefix||'';
+    const bc=borderChars(d);
+    return prefix+bc.ml+rep(bc.h,w-prefix.length)+bc.mr;
+  }
+  function blank(w,d,prefix){
+    d=d||0;
+    prefix=prefix||'';
+    const bc=borderChars(d);
+    return prefix+bc.v+rep(' ',w-prefix.length)+bc.v;
+  }
+  function reframe(line,w,d,prefix){
+    d=d||0;
+    prefix=prefix||'';
+    const bc=borderChars(d);
+    if(line.length===w+2) return line;
+    const inner=line.slice(prefix.length+1,-1);
+    return prefix+bc.v+pad(inner,w-prefix.length)+bc.v;
+  }
+
+  function blocksToLines(blocks,w,depth,prefix){
+    depth=depth||0;
+    prefix=prefix||'';
+    const out=[];
+    for(const b of (blocks||[])) out.push(...blockToLines(b,w,depth,prefix));
+    return out;
+  }
+
+  function blockToLines(b,w,depth,prefix){
+    depth=depth||0;
+    prefix=prefix||'';
+    const bc=borderChars(depth);
+    const lines=[];
+    switch(b.type){
+      case 'E':      lines.push(row('E: '+b.label,w,depth,prefix)); break;
+      case 'S':      lines.push(row('S: '+b.label,w,depth,prefix)); break;
+      case 'INSTR':
+      case 'ASIG':   lines.push(row(b.label,w,depth,prefix)); break;
+      case 'COMMENT':lines.push(row('/* '+b.label+' */',w,depth,prefix)); break;
+      case 'CALL':   lines.push(prefix+bc.v+bc.v+' '+pad(b.label,w-2-prefix.length)+' '+bc.v+bc.v); break;
+      case 'RETURN': lines.push(row('return '+b.label,w,depth,prefix)); break;
+
+      case 'IF':{
+        const cond='('+b.cond+')';
+        lines.push(HR(w,depth,prefix));
+        lines.push(prefix+bc.v+center(cond,w-prefix.length)+bc.v);
+        const tw=calcW(b.thenBlocks,MIN_W/2|0);
+        const ew=calcW(b.elseBlocks,MIN_W/2|0);
+        // proportional split
+        const total=tw+ew;
+        const tIW=total>0?Math.round(tw/total*(w-1-prefix.length)):Math.floor((w-1-prefix.length)/2);
+        const eIW=w-1-prefix.length-tIW;
+        lines.push(prefix+bc.v+center('V',tIW)+bc.v+center('F',eIW)+bc.v);
+        lines.push(prefix+bc.ml+rep(bc.h,tIW)+bc.cross+rep(bc.h,eIW)+bc.mr);
+        const newPrefix=prefix+bc.v;
+        const tLines=blocksToLines(b.thenBlocks,tIW,depth+1,newPrefix);
+        const eLines=blocksToLines(b.elseBlocks,eIW,depth+1,newPrefix);
+        const bcNested=borderChars(depth+1);
+        const maxR=Math.max(tLines.length,eLines.length,1);
+        for(let i=0;i<maxR;i++){
+          const tl=tLines[i]||(newPrefix+bcNested.v+rep(' ',tIW-newPrefix.length)+bcNested.v);
+          const el=eLines[i]||(newPrefix+bcNested.v+rep(' ',eIW-newPrefix.length)+bcNested.v);
+          lines.push(prefix+bc.v+pad(tl.slice(prefix.length+1,-1),tIW)+bc.v+pad(el.slice(prefix.length+1,-1),eIW)+bc.v);
+        }
+        lines.push(prefix+bc.bl+rep(bc.h,tIW)+bc.mb+rep(bc.h,eIW)+bc.br);
+        break;
+      }
+
+      case 'SWITCH':{
+        const cases=b.cases||[];
+        const n=Math.max(cases.length,1);
+        lines.push(HR(w,depth,prefix));
+        lines.push(prefix+bc.v+center(b.expr,w-prefix.length)+bc.v);
+        const colIW=Math.max(8,Math.floor((w-prefix.length-(n-1))/n));
+        const colWs=cases.map((_,i)=>i<n-1?colIW:w-prefix.length-colIW*(n-1)-(n-1));
+        const lblRow=cases.map((c,i)=>' '+pad(c.label||'?',colWs[i]-1)).join(bc.v);
+        lines.push(prefix+bc.v+lblRow+bc.v);
+        lines.push(prefix+bc.ml+colWs.map(cw=>rep(bc.h,cw)).join(bc.cross)+bc.mr);
+        const newPrefix=prefix+bc.v;
+        const colLines=cases.map((c,i)=>blocksToLines(c.blocks,colWs[i],depth+1,newPrefix));
+        const bcNested=borderChars(depth+1);
+        const maxR=Math.max(...colLines.map(cl=>cl.length),1);
+        for(let i=0;i<maxR;i++){
+          const cells=colLines.map((cl,ci)=>{
+            const l=cl[i]||(newPrefix+bcNested.v+rep(' ',colWs[ci]-newPrefix.length)+bcNested.v);
+            return pad(l.slice(prefix.length+1,-1),colWs[ci]);
+          });
+          lines.push(prefix+bc.v+cells.join(bc.v)+bc.v);
+        }
+        lines.push(prefix+bc.bl+colWs.map(cw=>rep(bc.h,cw)).join(bc.mb)+bc.br);
+        break;
+      }
+
+      case 'WHILE':{
+        lines.push(HR(w,depth,prefix));
+        lines.push(row('WHILE ('+b.cond+')',w,depth,prefix));
+        lines.push(HR(w,depth,prefix));
+        const newPrefix=prefix+bc.v;
+        const bl=blocksToLines(b.bodyBlocks,w,depth+1,newPrefix);
+        if(bl.length===0) lines.push(blank(w,depth,prefix));
+        else bl.forEach(l=>lines.push(reframe(l,w,depth,prefix)));
+        lines.push(prefix+bc.bl+rep(bc.h,w-prefix.length)+bc.br);
+        break;
+      }
+
+      case 'DOWHILE':{
+        lines.push(HR(w,depth,prefix));
+        const newPrefix=prefix+bc.v;
+        const bl=blocksToLines(b.bodyBlocks,w,depth+1,newPrefix);
+        if(bl.length===0) lines.push(blank(w,depth,prefix));
+        else bl.forEach(l=>lines.push(reframe(l,w,depth,prefix)));
+        lines.push(HR(w,depth,prefix));
+        lines.push(row('DO WHILE ('+b.cond+')',w,depth,prefix));
+        lines.push(prefix+bc.bl+rep(bc.h,w-prefix.length)+bc.br);
+        break;
+      }
+
+      case 'FOR':
+      case 'FOREACH':{
+        const tag=b.type==='FOR'?'FOR':'FOR-EACH';
+        lines.push(HR(w,depth,prefix));
+        lines.push(row(tag+' ('+b.header+')',w,depth,prefix));
+        lines.push(HR(w,depth,prefix));
+        const newPrefix=prefix+bc.v;
+        const bl=blocksToLines(b.bodyBlocks,w,depth+1,newPrefix);
+        if(bl.length===0) lines.push(blank(w,depth,prefix));
+        else bl.forEach(l=>lines.push(reframe(l,w,depth,prefix)));
+        lines.push(prefix+bc.bl+rep(bc.h,w-prefix.length)+bc.br);
+        break;
+      }
+
+      default: break;
+    }
+    return lines;
+  }
+
+  // Build full diagram
+  const params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  const sig=`public ${m.returnType} ${m.sig.replace(/\(.*\)/,`(${params})`)}`;
+  let w=calcW(m.blocks,MIN_W);
+  // Factor in declarations and signature
+  for(const d of m.decls){
+    const txt=(d.type==='CONST'?'final ':'')+''+d.label;
+    w=Math.max(w,txt.length+4);
+  }
+  w=Math.max(w,sig.length+4);
+
+  const bc=borderChars(0); // Main level uses double borders
+  const out=[];
+  out.push(bc.tl+rep(bc.h,w)+bc.tr);
+  out.push(row(sig,w,0,''));
+  if(m.decls.length>0){
+    out.push(bc.ml+rep(bc.h,w)+bc.mr);
+    for(const d of m.decls){
+      const txt=(d.type==='CONST'?'final ':'')+''+d.label;
+      out.push(row(txt,w,0,''));
+    }
+  }
+  out.push(bc.ml+rep(bc.h,w)+bc.mr);
+
+  const bodyLines=blocksToLines(m.blocks,w,0,'');
+  // Normalize all line widths
+  for(const l of bodyLines){
+    out.push(l);
+  }
+  if(bodyLines.length===0) out.push(blank(w,0));
+  out.push(bc.bl+rep(bc.h,w)+bc.br);
+  return out.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════════════════════
+
+function validateMethod(m){
+  const errors=[];
+  if(!m.name.trim()) errors.push('El método no tiene nombre de clase.');
+  if(!m.sig.trim())  errors.push('El método no tiene firma.');
+
+  function checkBlocks(blocks, ctx){
+    for(const b of (blocks||[])){
+      if(b.type==='IF'&&!b.cond.trim())      errors.push(`IF sin condición${ctx?` (en ${ctx})`:''}.`);
+      if(b.type==='WHILE'&&!b.cond.trim())   errors.push(`WHILE sin condición${ctx?` (en ${ctx})`:''}.`);
+      if(b.type==='DOWHILE'&&!b.cond.trim()) errors.push(`DO-WHILE sin condición${ctx?` (en ${ctx})`:''}.`);
+      if(b.type==='SWITCH'&&!b.expr.trim())  errors.push(`SWITCH sin expresión${ctx?` (en ${ctx})`:''}.`);
+      if((b.type==='FOR'||b.type==='FOREACH')&&!b.header.trim()) errors.push(`FOR sin parámetros${ctx?` (en ${ctx})`:''}.`);
+      if((b.type==='E'||b.type==='S')&&!b.label.trim()) errors.push(`${b.type==='E'?'INPUT':'OUTPUT'} vacío${ctx?` (en ${ctx})`:''}.`);
+      // Recurse
+      checkBlocks(b.thenBlocks, 'IF-Verdadero');
+      checkBlocks(b.elseBlocks, 'IF-Falso');
+      checkBlocks(b.bodyBlocks, b.type);
+      if(b.cases) b.cases.forEach(c=>checkBlocks(c.blocks,'SWITCH caso '+c.label));
+    }
+  }
+  checkBlocks(m.blocks, '');
+  return errors;
+}
+
+function saveProject(){
+  // Save the full project state as .nsgen (JSON)
+  const project = {
+    _nsgen: true,
+    version: '2.0',
+    savedAt: new Date().toISOString(),
+    activeMethodId,
+    idC,
+    methods
+  };
+  const blob = new Blob([JSON.stringify(project, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  // Use name of first method as filename
+  const fname = methods[0]?.name || 'proyecto';
+  a.download = `${fname}.nsgen`;
+  a.click();
+}
+
+function loadProject(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const project = JSON.parse(e.target.result);
+      if(!project._nsgen) throw new Error('Archivo no válido');
+      methods = project.methods;
+      activeMethodId = project.activeMethodId;
+      idC = project.idC || 1000;
+      cancelMode();
+      render();
+      alert(`✓ Proyecto cargado: ${methods.length} método(s)`);
+    } catch(err) {
+      alert('Error al cargar: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be loaded again
+  input.value = '';
+}
+
+function exportDiagram(){
+  let saved=activeMethodId;
+  const sections=[];
+
+  // ASCII art block for all methods
+  sections.push('╔══════════════════════════════════════════════════════╗');
+  sections.push('║              NS+Gen — Diagrama ASCII Art             ║');
+  sections.push('╚══════════════════════════════════════════════════════╝');
+  sections.push('');
+  methods.forEach(m=>{
+    activeMethodId=m.id;
+    sections.push(genASCII(m));
+    sections.push('');
+  });
+
+  // NS+ Code
+  sections.push('════════════════════════════════════════════════════════');
+  sections.push('  NS+ Code');
+  sections.push('════════════════════════════════════════════════════════');
+  methods.forEach(m=>{
+    activeMethodId=m.id;
+    sections.push(`--- ${m.name}: ${m.sig} ---`);
+    sections.push(genNS(m));
+  });
+
+  // Java
+  sections.push('════════════════════════════════════════════════════════');
+  sections.push('  Java');
+  sections.push('════════════════════════════════════════════════════════');
+  methods.forEach(m=>{ activeMethodId=m.id; sections.push(genJava(m)); });
+
+  // Python
+  sections.push('════════════════════════════════════════════════════════');
+  sections.push('  Python');
+  sections.push('════════════════════════════════════════════════════════');
+  methods.forEach(m=>{ activeMethodId=m.id; sections.push(genPython(m)); });
+
+  activeMethodId=saved;
+  const blob=new Blob([sections.join('\n')],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${methods[0]?.name||'proyecto'}_export.txt`;
+  a.click();
+}
+
+function validateAll(){
+  let saved=activeMethodId;
+  const allErrors=[];
+  methods.forEach(m=>{
+    activeMethodId=m.id;
+    const errs=validateMethod(m);
+    if(errs.length) allErrors.push(`[${m.name}: ${m.sig}]\n`+errs.map(e=>'  • '+e).join('\n'));
+  });
+  activeMethodId=saved;
+  if(allErrors.length===0){
+    alert('✓ Sin errores — el diagrama está completo.');
+  } else {
+    alert('⚠ Problemas encontrados:\n\n'+allErrors.join('\n\n'));
+  }
+}
+
+function togglePresentation(){
+  presentationMode = !presentationMode;
+  document.body.classList.toggle('presentation-mode', presentationMode);
+  const btn = document.getElementById('vt-pres');
+  const commBtn = document.getElementById('vt-comm');
+  if(presentationMode){
+    btn.classList.add('active');
+    btn.textContent = '✏ Edición';
+    commBtn.style.display = 'block';
+    commBtn.classList.toggle('active', showComments);
+    // Force visual view in presentation mode
+    if(currentView !== 'visual') setView('visual');
+    // Cancel any active operations
+    cancelMode();
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = '📽 Presentación';
+    commBtn.style.display = 'none';
+  }
+  render();
+}
+
+function toggleComments(){
+  showComments = !showComments;
+  document.body.classList.toggle('hide-comments', !showComments);
+  const btn = document.getElementById('vt-comm');
+  btn.classList.toggle('active', showComments);
+  btn.textContent = showComments ? '💬 Comentarios' : '🚫 Comentarios';
+}
+
+function toggleTheme(){
+  darkTheme = !darkTheme;
+  document.body.classList.toggle('dark-theme', darkTheme);
+  localStorage.setItem('nsgen_theme', darkTheme ? 'dark' : 'light');
+  const icon = document.getElementById('theme-icon');
+  if(icon) icon.textContent = darkTheme ? '☀' : '🌙';
+}
+
+function render(){
+  renderMethodList();renderTabs();renderDiagram();
+  if(currentView==='code') renderCodeView();
+  let ib=document.getElementById('infoBox'),it=document.getElementById('infoTitle'),ii=document.getElementById('infoBody'),cb=document.getElementById('cancelBtn');
+  cb.style.display=(mode!=='insert'||activeZone)?'block':'none';
+  if(mode==='move'){ib.className='info-box mode-move';it.textContent='Modo: mover bloque';ii.textContent=pendingBlockId?'Bloque marcado (✂). Clic en cualquier zona destino para moverlo ahí con todo su contenido.':'Clic en ✂ mover sobre el bloque origen.';}
+  else if(mode==='copy'){ib.className='info-box mode-copy';it.textContent='Modo: copiar bloque';ii.textContent=pendingBlockId?'Bloque marcado (⎘). Clic en una zona destino para pegar la copia completa.':'Clic en ⎘ copiar sobre el bloque origen.';}
+  else if(activeZone){ib.className='info-box mode-insert';it.textContent='Zona activa';let loc=activeZone.type==='if-then'?'rama Verdadero':activeZone.type==='if-else'?'rama Falso':activeZone.type==='loop'?'cuerpo del bucle':activeZone.type==='switch-case'?`caso ${activeZone.caseIdx}`:'zona principal';ii.textContent=`Insertando en: ${loc}. Elegí un bloque del panel derecho.`;}
+  else{ib.className='info-box';it.textContent='Zona de inserción';ii.textContent='Líneas punteadas = zonas de inserción. Clic para activar, luego elegí un bloque del panel. ✂ mover · ⎘ copiar.';}
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOCALSTORAGE HISTORY
+// ═══════════════════════════════════════════════════════
+
+function saveToHistory(){
+  if(methods.length === 0) return;
+  try {
+    const snapshot = {
+      timestamp: Date.now(),
+      methods: JSON.parse(JSON.stringify(methods)),
+      activeMethodId,
+      idC
+    };
+    let history = JSON.parse(localStorage.getItem('nsgen_history') || '[]');
+    history.unshift(snapshot);
+    if(history.length > HISTORY_LIMIT) history = history.slice(0, HISTORY_LIMIT);
+    localStorage.setItem('nsgen_history', JSON.stringify(history));
+    localStorage.setItem('nsgen_last', JSON.stringify(snapshot));
+  } catch(e) {
+    console.error('Error saving to history:', e);
+  }
+}
+
+function loadFromHistory(index){
+  try {
+    const history = JSON.parse(localStorage.getItem('nsgen_history') || '[]');
+    if(index >= 0 && index < history.length){
+      const snapshot = history[index];
+      methods = JSON.parse(JSON.stringify(snapshot.methods));
+      activeMethodId = snapshot.activeMethodId;
+      idC = snapshot.idC;
+      cancelMode();
+      render();
+      alert('✓ Versión restaurada');
+      closeHistoryPanel();
+    }
+  } catch(e) {
+    alert('Error al cargar versión: ' + e.message);
+  }
+}
+
+function getHistory(){
+  try {
+    return JSON.parse(localStorage.getItem('nsgen_history') || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function clearHistory(){
+  if(confirm('¿Borrar todo el historial? Esta acción no se puede deshacer.')){
+    localStorage.removeItem('nsgen_history');
+    localStorage.removeItem('nsgen_last');
+    alert('✓ Historial borrado');
+    closeHistoryPanel();
+  }
+}
+
+function formatTimestamp(ts){
+  const now = Date.now();
+  const diff = now - ts;
+  const date = new Date(ts);
+  if(diff < 60000) return 'Hace unos segundos';
+  if(diff < 3600000) return `Hace ${Math.floor(diff/60000)} min`;
+  if(diff < 86400000) return `Hoy ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+  if(diff < 172800000) return `Ayer ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+  if(diff < 604800000){
+    const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    return `${days[date.getDay()]} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+  }
+  return `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+
+function showHistoryPanel(){
+  const history = getHistory();
+  let html = `
+    <div id="history-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)closeHistoryPanel()">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:500px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+        <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:14px;font-weight:700;color:var(--text)">📜 Historial de versiones</span>
+          <button onclick="closeHistoryPanel()" style="background:transparent;border:none;font-size:18px;cursor:pointer;color:var(--text2)">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px">`;
+  if(history.length === 0){
+    html += '<div style="text-align:center;padding:32px;color:var(--text3)">Sin versiones guardadas</div>';
+  } else {
+    history.forEach((snap, i) => {
+      const methodCount = snap.methods.length;
+      const methodNames = snap.methods.map(m=>m.name).join(', ');
+      html += `
+        <div style="border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s" 
+             onmouseover="this.style.background='var(--bg2)';this.style.borderColor='var(--blue)'" 
+             onmouseout="this.style.background='';this.style.borderColor='var(--border)'"
+             onclick="loadFromHistory(${i})">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${formatTimestamp(snap.timestamp)}</div>
+          <div style="font-size:12px;color:var(--text);font-weight:500">${methodCount} método${methodCount>1?'s':''}: ${methodNames}</div>
+        </div>`;
+    });
+  }
+  html += `</div>
+        <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+          <button onclick="clearHistory()" style="flex:1;padding:8px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--red);cursor:pointer;font-size:11px;font-weight:600">Borrar historial</button>
+          <button onclick="closeHistoryPanel()" style="flex:1;padding:8px;border:1px solid var(--blue);border-radius:6px;background:var(--blue);color:#fff;cursor:pointer;font-size:11px;font-weight:600">Cerrar</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function closeHistoryPanel(){
+  const overlay = document.getElementById('history-overlay');
+  if(overlay) overlay.remove();
+}
+
+function startAutoSave(){
+  saveToHistory();
+  if(autoSaveTimer) clearInterval(autoSaveTimer);
+  autoSaveTimer = setInterval(() => {
+    saveToHistory();
+  }, AUTOSAVE_INTERVAL);
+}
+
+function triggerSave(){
+  saveToHistory();
+}
+
+function init(){
+  // Load theme preference
+  const savedTheme = localStorage.getItem('nsgen_theme');
+  if(savedTheme === 'dark'){
+    darkTheme = true;
+    document.body.classList.add('dark-theme');
+    const icon = document.getElementById('theme-icon');
+    if(icon) icon.textContent = '☀';
+  }
+  
+  // Try to recover last session
+  try {
+    const last = localStorage.getItem('nsgen_last');
+    if(last){
+      const snapshot = JSON.parse(last);
+      if(snapshot.methods && snapshot.methods.length > 0){
+        methods = snapshot.methods;
+        activeMethodId = snapshot.activeMethodId;
+        idC = snapshot.idC || 1000;
+      }
+    }
+  } catch(e) {
+    console.error('Error loading last session:', e);
+  }
+  
+  if(methods.length === 0){
+    showAddMethod();
+  } else {
+    render();
+  }
+  
+  // Start autosave timer
+  startAutoSave();
+  
+  // Register Service Worker for PWA
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(registration => {
+          console.log('[PWA] Service Worker registrado:', registration.scope);
+        })
+        .catch(error => {
+          console.log('[PWA] Error al registrar Service Worker:', error);
+        });
+    });
+  }
+}
+
+init();
+</script>
+
+<!--
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      GUÍA DE PERSONALIZACIÓN CSS                           ║
+║                     NS+Gen - Parámetros Editables                          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Esta guía te permite ajustar el aspecto visual sin romper funcionalidad.
+Buscá las clases en la sección <style> (líneas ~50-180) y modificá sus valores.
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. COLORES DE BLOQUES                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Bloques de Repetición (L sólida en un solo color):
+  WHILE (azul):
+    .lp-hdr { background: #B8D9F5 }       Header azul (mismo que barra)
+    .lp-tag { color: #0C447C }             Texto etiqueta azul oscuro
+    .lp-body::before { border-color: #B8D9F5; border-left: ... }  Barra IZQUIERDA azul
+    SIN border-top en .lp-body para fusionar header con barra
+  
+  FOR (lila):
+    .for-hdr { background: #C5B5E8 }       Header lila (mismo que barra)
+    .for-tag { color: #534AB7 }            Texto morado oscuro
+    .for-body::before { border-color: #C5B5E8; border-left: ... }  Barra IZQUIERDA lila
+    SIN border-top en .for-body para fusionar
+  
+  DO-WHILE (verde):
+    .dw-ftr { background: #D4ECC2 }        Footer verde (mismo que barra)
+    .dw-tag { color: #27500A }             Texto verde oscuro
+    .dw-body::before { border-color: #D4ECC2; border-left: ... }  Barra IZQUIERDA verde
+    SIN border-top en .dw-body para fusionar
+
+IF:
+  .ns-if-hdr { background: #F5F5FF }     Fondo header IF (lila muy claro)
+  .ns-if-hdr input { color: #3C3489 }    Color texto condición
+  .if-lbl { color: #534AB7 }             Color V y F
+
+SWITCH:
+  .sw-hdr { background: #FFFBF0 }        Fondo header SWITCH (amarillo)
+
+Instrucciones/Asignaciones:
+  .b-instr { background: #FFFBEA }       Fondo amarillo claro
+
+E/S (Entrada/Salida):
+  .io-e { background: #FFE8F0 }          Fondo rosado entrada
+  .io-s { background: #E8FFF5 }          Fondo verde salida
+
+Comentarios:
+  .b-com { background: #F7F7F7 }         Fondo gris claro
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 2. BARRAS LATERALES DE LOOPS (forma de L, posición IZQUIERDA)             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+WHILE (azul):
+  .lp-body::before { 
+    left: 0;                             Posicionado a la IZQUIERDA
+    width: 20px;                         Ancho de la barra
+    border-top: 20px solid #B8D9F5;      Altura barra horizontal (azul)
+    border-left: 20px solid #B8D9F5;     Ancho barra vertical (azul)
+  }
+
+FOR (lila):
+  .for-body::before { 
+    left: 0; 
+    width: 20px; 
+    border-top: 20px solid #C5B5E8;      Color lila
+    border-left: 20px solid #C5B5E8; 
+  }
+
+DO-WHILE (verde):
+  .dw-body::before { 
+    left: 0; 
+    width: 20px; 
+    border-top: 20px solid #D4ECC2;      Color verde pastel
+    border-left: 20px solid #D4ECC2; 
+  }
+
+RECOMENDACIÓN: Mantené width y border-left iguales.
+El valor de border-top define la altura horizontal de la L.
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 3. TIPOGRAFÍA                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Tamaño de etiquetas (FOR, WHILE, IF, etc.):
+  .lp-tag { font-size: 10px }            Tamaño texto FOR/WHILE
+  .dw-tag { font-size: 10px }            Tamaño texto DO WHILE
+  .if-lbl { font-size: 10px }            Tamaño texto V y F
+
+Tamaño de condiciones/código:
+  .lp-hdr input { font-size: 12px }      Input loops
+  .ns-if-hdr input { font-size: 12px }   Input IF
+  .ns-bi input { font-size: 12px }       Input instrucciones
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 4. VARIABLES/CONSTANTES/PARÁMETROS                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Ancho mínimo de cada declaración:
+  .decl-row input { min-width: 120px }   Cambiar para más/menos espacio
+
+Colores de badges:
+  .badge-var { background: #E6F1FB; color: #0C447C }    VAR
+  .badge-const { background: #EAF3DE; color: #27500A }  CONST
+  .badge-param { background: #FAEEDA; color: #633806 }  PARAM
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 5. ESPACIADO                                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Padding interno de headers:
+  .lp-hdr { padding: 5px 9px }           Espaciado vertical y horizontal
+  .ns-if-hdr { padding: 5px 9px }
+  .dw-ftr { padding: 5px 9px }
+
+Altura mínima de bloques:
+  .lp-body { min-height: 28px }          Altura mínima cuerpo loops
+  .dw-body { min-height: 28px }
+
+Gap entre declaraciones:
+  .decl-section { gap: 4px }             Espacio entre VAR/CONST/PARAM
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 6. TEMA OSCURO                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Variables CSS para tema oscuro (activo cuando body tiene clase 'dark-theme'):
+  body.dark-theme {
+    --bg: #1a1d24;           Fondo principal
+    --bg2: #252931;          Fondo secundario
+    --text: #e6edf3;         Texto principal
+    --text2: #9198a1;        Texto secundario
+    --blue: #1f6feb;         Bordes azules
+    ...
+  }
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 7. EJEMPLOS DE AJUSTES COMUNES                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Hacer las barras de loops MÁS ANCHAS:
+  .lp-body::before { width: 30px; border-left: 30px solid #B8D9F5; }
+  .for-body::before { width: 30px; border-left: 30px solid #C5B5E8; }
+  .dw-body::before { width: 30px; border-left: 30px solid #D4ECC2; }
+
+Cambiar WHILE a color verde:
+  .lp-body::before { border-color: #D4ECC2; }
+
+Hacer FOR con el mismo azul que WHILE:
+  .for-body::before { border-color: #B8D9F5; }
+
+Hacer el texto de condiciones más grande:
+  .lp-hdr input { font-size: 14px }
+  .ns-if-hdr input { font-size: 14px }
+
+Darle más espacio a las declaraciones:
+  .decl-section { padding: 10px 12px; gap: 8px }
+
+═══════════════════════════════════════════════════════════════════════════════
+NOTAS IMPORTANTES:
+• Siempre guardá una copia de respaldo antes de modificar
+• Probá cambios de a uno por vez
+• Si algo se rompe, recargá la página sin guardar
+═══════════════════════════════════════════════════════════════════════════════
+-->
+
+</body>
+</html>

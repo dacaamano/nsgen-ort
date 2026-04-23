@@ -1,0 +1,278 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║           NS+Gen PWA - GUÍA DE INSTALACIÓN EN ANDROID                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📱 INSTALACIÓN COMO APP EN ANDROID
+──────────────────────────────────
+
+NS+Gen es una Progressive Web App (PWA). Esto significa que podés instalarla
+en tu celular Android como si fuera una app nativa, sin necesidad de Google
+Play Store.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+MÉTODO 1: DESDE UN SERVIDOR WEB (Recomendado)
+──────────────────────────────────────────────
+
+REQUISITOS:
+• Celular Android con Chrome, Edge o Samsung Internet
+• Los archivos deben estar en un servidor web con HTTPS
+
+PASOS:
+
+1. SUBIR ARCHIVOS A UN SERVIDOR WEB
+   Opciones gratuitas:
+   • GitHub Pages (github.com)
+   • Netlify (netlify.com)
+   • Vercel (vercel.com)
+   • Firebase Hosting (firebase.google.com)
+
+   Archivos necesarios:
+   ✓ ns_gen_v3.html
+   ✓ manifest.json
+   ✓ service-worker.js
+   ✓ icon-72.png, icon-96.png, ..., icon-512.png (todos los íconos)
+
+2. ABRIR EN CHROME ANDROID
+   • Abrí Chrome en tu Android
+   • Navegá a la URL donde subiste NS+Gen
+   • Ejemplo: https://tu-usuario.github.io/nsgen/ns_gen_v3.html
+
+3. INSTALAR LA APP
+   Chrome mostrará automáticamente un banner que dice:
+   "Agregar NS+Gen a la pantalla de inicio"
+   
+   Si NO aparece el banner:
+   • Tocá el menú (⋮) en la esquina superior derecha
+   • Seleccioná "Agregar a pantalla de inicio"
+   • Confirmá el nombre y tocá "Agregar"
+
+4. ¡LISTO!
+   • Aparecerá un ícono de NS+Gen en tu pantalla de inicio
+   • Tocalo para abrir la app
+   • Funciona exactamente como una app nativa
+   • Funciona OFFLINE (sin internet) después de la primera carga
+
+═══════════════════════════════════════════════════════════════════════════════
+
+MÉTODO 2: LOCALHOST CON PYTHON (Para pruebas)
+──────────────────────────────────────────────
+
+Si querés probar la PWA sin subirla a internet:
+
+1. EN TU COMPUTADORA
+   Abrí una terminal en la carpeta donde están los archivos y ejecutá:
+   
+   Python 3:
+   python -m http.server 8000
+   
+   Python 2:
+   python -m SimpleHTTPServer 8000
+
+2. CONECTAR EL CELULAR
+   • Conectá tu Android a la MISMA RED WIFI que tu PC
+   • En tu PC, buscá tu IP local:
+     - Windows: ipconfig
+     - Linux/Mac: ifconfig
+   • Ejemplo de IP: 192.168.1.100
+
+3. EN EL CELULAR
+   • Abrí Chrome
+   • Navegá a: http://192.168.1.100:8000/ns_gen_v3.html
+   • Seguí los pasos de instalación del Método 1
+
+NOTA: Este método NO funciona offline porque no hay HTTPS.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+MÉTODO 3: GITHUB PAGES (Paso a paso detallado)
+───────────────────────────────────────────────
+
+Este es el método MÁS SIMPLE para tener NS+Gen disponible online:
+
+1. CREAR CUENTA EN GITHUB
+   • Andá a github.com
+   • Hacé clic en "Sign up"
+   • Creá tu cuenta gratis
+
+2. CREAR REPOSITORIO
+   • Click en el botón "+" → "New repository"
+   • Nombre: nsgen-ort (o el que prefieras)
+   • Marcá "Public"
+   • Marcá "Add a README file"
+   • Click en "Create repository"
+
+3. SUBIR ARCHIVOS
+   • En tu repositorio, click en "Add file" → "Upload files"
+   • Arrastrá TODOS estos archivos:
+     ✓ ns_gen_v3.html
+     ✓ manifest.json
+     ✓ service-worker.js
+     ✓ icon-72.png hasta icon-512.png
+     ✓ LICENSE.txt
+     ✓ MANUAL_DE_USUARIO.txt
+     ✓ README.md
+   • Click en "Commit changes"
+
+4. ACTIVAR GITHUB PAGES
+   • En tu repositorio, click en "Settings"
+   • En el menú izquierdo, click en "Pages"
+   • En "Source", seleccioná "main" branch
+   • Click en "Save"
+   • Esperá 1-2 minutos
+
+5. OBTENER LA URL
+   GitHub te dará una URL como:
+   https://tu-usuario.github.io/nsgen-ort/ns_gen_v3.html
+   
+   ¡Esta es tu URL pública!
+
+6. INSTALAR EN ANDROID
+   • Abrí esa URL en Chrome Android
+   • Seguí los pasos del Método 1
+
+═══════════════════════════════════════════════════════════════════════════════
+
+GENERACIÓN DE ÍCONOS PNG
+─────────────────────────
+
+Los íconos necesarios (icon-72.png, icon-96.png, etc.) se pueden generar
+a partir del archivo icon.svg incluido.
+
+OPCIÓN A: Usar una herramienta online
+• Andá a: https://realfavicongenerator.net
+• Subí icon.svg
+• Descargá todos los tamaños necesarios
+
+OPCIÓN B: Usar ImageMagick (si lo tenés instalado)
+convert icon.svg -resize 72x72 icon-72.png
+convert icon.svg -resize 96x96 icon-96.png
+convert icon.svg -resize 128x128 icon-128.png
+convert icon.svg -resize 144x144 icon-144.png
+convert icon.svg -resize 152x152 icon-152.png
+convert icon.svg -resize 192x192 icon-192.png
+convert icon.svg -resize 384x384 icon-384.png
+convert icon.svg -resize 512x512 icon-512.png
+
+OPCIÓN C: Usar Inkscape
+• Abrí icon.svg en Inkscape
+• File → Export PNG Image
+• Configurá el ancho/alto para cada tamaño
+• Exportá cada uno con su nombre correspondiente
+
+═══════════════════════════════════════════════════════════════════════════════
+
+VERIFICAR QUE LA PWA FUNCIONA
+──────────────────────────────
+
+1. Abrí la app instalada en tu Android
+2. Activá el modo avión (sin internet)
+3. Abrí NS+Gen desde el ícono en tu pantalla de inicio
+4. Debería funcionar perfectamente SIN INTERNET
+
+Si funciona → ✅ PWA instalada correctamente
+Si NO funciona → Verificá que todos los archivos estén en el servidor
+
+═══════════════════════════════════════════════════════════════════════════════
+
+CARACTERÍSTICAS DE LA PWA
+──────────────────────────
+
+✅ Funciona OFFLINE después de la primera carga
+✅ Se instala como app nativa (ícono en pantalla de inicio)
+✅ Abre en pantalla completa (sin barra de navegador)
+✅ Se actualiza automáticamente cuando subís cambios
+✅ Ocupa muy poco espacio (~1MB)
+✅ No necesita permisos especiales
+✅ Funciona en cualquier Android con Chrome/Edge
+
+═══════════════════════════════════════════════════════════════════════════════
+
+COMPARTIR CON OTROS ESTUDIANTES
+────────────────────────────────
+
+Una vez que tenés NS+Gen online (ejemplo: en GitHub Pages):
+
+1. Compartí la URL con tus compañeros
+2. Ellos la abren en Chrome Android
+3. Cada uno la instala en su celular
+4. ¡Todos tienen NS+Gen funcionando offline!
+
+═══════════════════════════════════════════════════════════════════════════════
+
+SOLUCIÓN DE PROBLEMAS
+──────────────────────
+
+PROBLEMA: No aparece el banner "Agregar a pantalla de inicio"
+SOLUCIÓN:
+• Verificá que estás usando Chrome o Edge (no funciona en todos los navegadores)
+• Verificá que la URL sea HTTPS (no HTTP)
+• Probá el menú manual: ⋮ → "Agregar a pantalla de inicio"
+
+PROBLEMA: La app no funciona offline
+SOLUCIÓN:
+• Abrí Chrome → chrome://serviceworker-internals
+• Verificá que el service worker esté registrado
+• Desinstalá la app y volvé a instalarla
+
+PROBLEMA: Los íconos no se ven
+SOLUCIÓN:
+• Verificá que todos los archivos icon-XX.png estén en el servidor
+• Verificá que manifest.json esté en la misma carpeta que ns_gen_v3.html
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PREGUNTAS FRECUENTES
+────────────────────
+
+P: ¿Necesito Google Play Store?
+R: NO. Es una PWA, se instala directamente desde el navegador.
+
+P: ¿Funciona en iPhone?
+R: SÍ, pero con limitaciones. Safari soporta PWAs parcialmente.
+
+P: ¿Se actualiza automáticamente?
+R: SÍ. Cuando subís una nueva versión al servidor, la app se actualiza sola.
+
+P: ¿Puedo compartir mis diagramas entre el celular y la PC?
+R: Los diagramas se guardan localmente en cada dispositivo. Podés usar
+   "Guardar" → archivo .nsgen y compartirlo manualmente.
+
+P: ¿Cuánto espacio ocupa?
+R: Aproximadamente 150KB-1MB (muy poco).
+
+P: ¿Puedo desinstalarla?
+R: SÍ. Mantené presionado el ícono → "Desinstalar" o "Eliminar".
+
+═══════════════════════════════════════════════════════════════════════════════
+
+RECOMENDACIÓN PARA ORT ARGENTINA
+─────────────────────────────────
+
+Para facilitar el acceso a todos los estudiantes:
+
+1. Subir NS+Gen a GitHub Pages institucional
+2. Crear un código QR con la URL
+3. Compartir el QR en clase
+4. Los estudiantes escanean el QR → Instalan la app
+5. ¡Todos tienen NS+Gen en sus celulares!
+
+URL corta sugerida: ort.edu.ar/nsgen (si ORT puede configurar un redirect)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+SOPORTE
+───────
+
+Para problemas técnicos o consultas:
+• Contactar al autor a través de ORT Argentina
+• Ver MANUAL_DE_USUARIO.txt para guía completa de uso
+• Ver README.md para documentación técnica
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¡Disfrutá de NS+Gen en tu celular! 📱
+
+Autor: Daniel - ORT Argentina
+Licencia: MIT (Código Abierto)
+Versión: 3.0 PWA

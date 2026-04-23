@@ -1,0 +1,101 @@
+{
+  "name": "NS+Gen - Generador de Diagramas Nassi-Schneidermann",
+  "short_name": "NS+Gen",
+  "description": "Generador visual de diagramas Nassi-Schneidermann con exportación automática a Java, Python y pseudocódigo",
+  "start_url": "./ns_gen_v3.html",
+  "display": "standalone",
+  "background_color": "#1a3a6e",
+  "theme_color": "#1a3a6e",
+  "orientation": "any",
+  "scope": "./",
+  "lang": "es-AR",
+  "dir": "ltr",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuevo Diagrama",
+      "short_name": "Nuevo",
+      "description": "Crear un nuevo diagrama NS+",
+      "url": "./ns_gen_v3.html",
+      "icons": [
+        {
+          "src": "icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "720x540",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "share_target": {
+    "action": "./ns_gen_v3.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text"
+    }
+  }
+}
