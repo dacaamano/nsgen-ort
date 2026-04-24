@@ -211,6 +211,9 @@ body.presentation-mode .zone-bar:hover{min-height:10px;color:transparent;border-
 .ba.mov.marked{background:var(--blue);color:#fff;border-color:var(--blue)}
 .ba.cop.marked{background:var(--green);color:#fff;border-color:var(--green)}
 
+/* ── KEYBOARD SELECTION ── */
+.block-selected{outline:2px solid var(--blue);outline-offset:1px;box-shadow:0 0 0 3px rgba(88,166,255,0.15);transition:all 0.15s}
+
 /* ── RIGHT SIDEBAR ── */
 .sidebar-right{background:var(--bg2);border-left:0.5px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .ps-hdr{padding:8px 10px;font-size:11px;font-weight:700;color:#fff;background:var(--blue);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;letter-spacing:0.3px}
@@ -356,6 +359,8 @@ body.hide-comments .b-com{display:none !important}
   <span title="Licencia MIT - Código Abierto">📄 MIT License</span>
   <span>·</span>
   <span>Funciona 100% offline</span>
+  <span>·</span>
+  <span title="Presioná F1 o ? para ver todos los atajos">⌨️ Atajos: Ctrl+I, Ctrl+Shift+W, Esc...</span>
   <span>·</span>
   <button onclick="toggleTheme()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:3px 8px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:14px" title="Cambiar tema"><span id="theme-icon">🌙</span></button>
 </div>
@@ -1487,6 +1492,153 @@ function init(){
 }
 
 init();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+
+let selectedBlockId = null; // ID del bloque actualmente seleccionado
+
+// Función para insertar bloque vía atajo
+function insertBlockViaShortcut(type){
+  const activeZone = document.querySelector('.iz.active');
+  if(!activeZone){
+    // No hay zona activa, intentar activar la primera disponible
+    const firstZone = document.querySelector('.iz');
+    if(firstZone){
+      firstZone.click();
+      setTimeout(() => insertBlock(type), 50);
+    } else {
+      alert('Seleccioná una zona de inserción primero (hacé clic en "Zona de inserción")');
+    }
+    return;
+  }
+  insertBlock(type);
+}
+
+// Función para mover bloque hacia arriba
+function moveBlockUp(){
+  if(!selectedBlockId) return;
+  const block = findBlockById(selectedBlockId);
+  if(!block || !block.parent) return;
+  
+  const siblings = block.parent.blocks || block.parent.thenBlocks || block.parent.elseBlocks || block.parent.bodyBlocks;
+  if(!siblings) return;
+  
+  const idx = siblings.indexOf(block.block);
+  if(idx > 0){
+    [siblings[idx], siblings[idx-1]] = [siblings[idx-1], siblings[idx]];
+    render();
+    setTimeout(() => highlightBlock(selectedBlockId), 100);
+  }
+}
+
+// Función para mover bloque hacia abajo
+function moveBlockDown(){
+  if(!selectedBlockId) return;
+  const block = findBlockById(selectedBlockId);
+  if(!block || !block.parent) return;
+  
+  const siblings = block.parent.blocks || block.parent.thenBlocks || block.parent.elseBlocks || block.parent.bodyBlocks;
+  if(!siblings) return;
+  
+  const idx = siblings.indexOf(block.block);
+  if(idx < siblings.length - 1){
+    [siblings[idx], siblings[idx+1]] = [siblings[idx+1], siblings[idx]];
+    render();
+    setTimeout(() => highlightBlock(selectedBlockId), 100);
+  }
+}
+
+// Función para eliminar bloque seleccionado
+function deleteSelectedBlock(){
+  if(!selectedBlockId) return;
+  if(confirm('¿Eliminar este bloque?')){
+    delBlock(selectedBlockId);
+    selectedBlockId = null;
+  }
+}
+
+// Función para resaltar bloque seleccionado
+function highlightBlock(bid){
+  document.querySelectorAll('.block-selected').forEach(el => el.classList.remove('block-selected'));
+  const blockEl = document.querySelector(`[data-bid="${bid}"]`);
+  if(blockEl){
+    blockEl.classList.add('block-selected');
+    selectedBlockId = bid;
+  }
+}
+
+// Listener de teclado global
+document.addEventListener('keydown', (e) => {
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  const ctrl = e.ctrlKey || e.metaKey;
+  const shift = e.shiftKey;
+  const key = e.key.toLowerCase();
+  
+  // BLOQUES BÁSICOS
+  if(ctrl && !shift && key === 'i'){ e.preventDefault(); insertBlockViaShortcut('INSTR'); return; }
+  if(ctrl && !shift && key === 'a'){ e.preventDefault(); insertBlockViaShortcut('ASIG'); return; }
+  if(ctrl && !shift && key === 'e'){ e.preventDefault(); insertBlockViaShortcut('E'); return; }
+  if(ctrl && !shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('S'); return; }
+  if(ctrl && !shift && key === '/'){ e.preventDefault(); insertBlockViaShortcut('COMMENT'); return; }
+  
+  // ESTRUCTURAS DE CONTROL
+  if(ctrl && shift && key === 'i'){ e.preventDefault(); insertBlockViaShortcut('IF'); return; }
+  if(ctrl && shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('SWITCH'); return; }
+  if(ctrl && shift && key === 'w'){ e.preventDefault(); insertBlockViaShortcut('WHILE'); return; }
+  if(ctrl && shift && key === 'd'){ e.preventDefault(); insertBlockViaShortcut('DOWHILE'); return; }
+  if(ctrl && shift && key === 'f'){ e.preventDefault(); insertBlockViaShortcut('FOR'); return; }
+  
+  // ACCIONES
+  if(ctrl && !shift && key === 'n'){ e.preventDefault(); showAddMethod(); return; }
+  if(ctrl && !shift && key === 'g'){ e.preventDefault(); saveProject(); return; }
+  if(ctrl && !shift && key === 'v'){ e.preventDefault(); validateDiagram(); return; }
+  
+  // MOVIMIENTO
+  if(ctrl && !shift && key === 'arrowup'){ e.preventDefault(); moveBlockUp(); return; }
+  if(ctrl && !shift && key === 'arrowdown'){ e.preventDefault(); moveBlockDown(); return; }
+  
+  // ELIMINAR Y ESCAPE
+  if(key === 'delete' && selectedBlockId){ e.preventDefault(); deleteSelectedBlock(); return; }
+  if(key === 'escape'){
+    e.preventDefault();
+    document.querySelectorAll('.iz.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.block-selected').forEach(el => el.classList.remove('block-selected'));
+    selectedBlockId = null;
+    return;
+  }
+  
+  // NAVEGACIÓN ENTRE MÉTODOS
+  if(ctrl && !shift && key === 'tab'){
+    e.preventDefault();
+    const currentIdx = methods.findIndex(m => m.id === activeMethodId);
+    const nextIdx = (currentIdx + 1) % methods.length;
+    activeMethodId = methods[nextIdx].id;
+    render();
+    return;
+  }
+  
+  if(ctrl && shift && key === 'tab'){
+    e.preventDefault();
+    const currentIdx = methods.findIndex(m => m.id === activeMethodId);
+    const prevIdx = (currentIdx - 1 + methods.length) % methods.length;
+    activeMethodId = methods[prevIdx].id;
+    render();
+    return;
+  }
+});
+
+// Hacer bloques seleccionables con click
+document.addEventListener('click', (e) => {
+  const blockEl = e.target.closest('[data-bid]');
+  if(blockEl && !e.target.closest('input') && !e.target.closest('button')){
+    const bid = blockEl.getAttribute('data-bid');
+    highlightBlock(bid);
+  }
+});
+
 </script>
 
 <!--
