@@ -1317,10 +1317,9 @@ function render(){
   else if(activeZone){ib.className='info-box mode-insert';it.textContent='Zona activa';let loc=activeZone.type==='if-then'?'rama Verdadero':activeZone.type==='if-else'?'rama Falso':activeZone.type==='loop'?'cuerpo del bucle':activeZone.type==='switch-case'?`caso ${activeZone.caseIdx}`:'zona principal';ii.textContent=`Insertando en: ${loc}. Elegí un bloque del panel derecho.`;}
   else{ib.className='info-box';it.textContent='Zona de inserción';ii.textContent='Líneas punteadas = zonas de inserción. Clic para activar, luego elegí un bloque del panel. ✂ mover · ⎘ copiar.';}
   
-  // Auto-activar primera zona si el método está vacío
+  // Auto-activar primera zona si no hay ninguna activa
   setTimeout(() => {
-    const m = methods.find(x => x.id === activeMethodId);
-    if(m && m.blocks.length === 0 && !activeZone){
+    if(!activeZone){
       const firstZone = document.querySelector('.iz');
       if(firstZone && !firstZone.classList.contains('active')){
         firstZone.classList.add('active');
@@ -1518,31 +1517,18 @@ let selectedBlockId = null; // ID del bloque actualmente seleccionado
 
 // Función para insertar bloque vía atajo
 function insertBlockViaShortcut(type){
-  console.log('🔧 insertBlockViaShortcut llamada con type:', type);
-  
   const activeZone = document.querySelector('.iz.active');
-  console.log('🔍 Zona activa encontrada:', activeZone ? 'SÍ' : 'NO');
   
   if(!activeZone){
     // No hay zona activa, activar la primera disponible
     const firstZone = document.querySelector('.iz');
-    console.log('🔍 Primera zona disponible:', firstZone ? 'SÍ' : 'NO');
-    
     if(firstZone){
-      console.log('👆 Haciendo click en primera zona...');
       firstZone.click();
-      setTimeout(() => {
-        console.log('⏰ Timeout ejecutado, llamando insertBlock...');
-        insertBlock(type);
-      }, 50);
-    } else {
-      console.log('❌ No hay zonas disponibles');
+      setTimeout(() => insertBlock(type), 50);
     }
     return;
   }
   
-  console.log('✅ Hay zona activa, insertando directamente...');
-  console.log('📊 activeZone variable global:', activeZone);
   insertBlock(type);
 }
 
@@ -1601,9 +1587,6 @@ function highlightBlock(bid){
 
 // Listener de teclado global
 document.addEventListener('keydown', (e) => {
-  // Debug: verificar que el listener funciona
-  console.log('Key pressed:', e.key, 'Ctrl:', e.ctrlKey, 'Alt:', e.altKey, 'Shift:', e.shiftKey);
-  
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   
   const ctrl = e.ctrlKey || e.metaKey;
@@ -1613,7 +1596,6 @@ document.addEventListener('keydown', (e) => {
   
   // BLOQUES BÁSICOS (Ctrl + Alt + Tecla)
   if(ctrl && alt && !shift && key === 'i'){ 
-    console.log('✓ Atajo detectado: Ctrl+Alt+I');
     e.preventDefault(); 
     insertBlockViaShortcut('INSTR'); 
     return; 
