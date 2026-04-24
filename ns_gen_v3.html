@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NS+Gen — Generador de Diagramas Nassi-Schneidermann</title>
-<meta name="author" content="Daniel - Estudiante de Analista de Sistemas, ORT Argentina">
+<meta name="author" content="Daniel Antonio Caamaño - Estudiante de Analista de Sistemas, ORT Argentina">
 <meta name="description" content="Generador visual de diagramas Nassi-Schneidermann con exportación automática a Java, Python y pseudocódigo">
 <meta name="keywords" content="Nassi-Schneidermann, NS+, diagramas, programación, ORT Argentina, educación">
 <meta name="license" content="MIT License - Código Abierto">
@@ -30,7 +30,7 @@
 ║            Generador de Diagramas Nassi-Schneidermann Plus                ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
-Autor: Daniel
+Autor: Daniel Antonio Caamaño
 Institución: ORT Argentina - Analista de Sistemas
 Año: 2026 - Primer Cuatrimestre
 Materia: Fundamentos de Programación
@@ -227,6 +227,7 @@ body.presentation-mode .zone-bar:hover{min-height:10px;color:transparent;border-
 .bb-if{background:var(--purple-light);color:#3C3489}.bb-sw{background:var(--amber-light);color:#854F0B}
 .bb-wh{background:var(--green-light);color:#085041}.bb-dw{background:#EAF3DE;color:#27500A}.bb-fo{background:#E6F1FB;color:#0C447C}
 .bb-ca{background:#fdf0f7;color:#72243E}.bb-re{background:#fffbea;color:#633806}
+.kbd{margin-left:auto;font-size:9px;color:var(--text3);font-family:monospace;white-space:nowrap;opacity:0.7}
 
 /* ── INFO BOX ── */
 .info-box{padding:9px 10px;font-size:11px;margin:6px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);flex-shrink:0}
@@ -306,31 +307,31 @@ body.hide-comments .b-com{display:none !important}
   <div>
     <div class="ps-hdr" onclick="toggleSec('es')">Entrada / Salida <span id="arr-es">▾</span></div>
     <div class="ps-body" id="body-es">
-      <button class="bb" onclick="insertBlock('E')"><span class="bbb bb-e">E</span> Entrada (INPUT)</button>
-      <button class="bb" onclick="insertBlock('S')"><span class="bbb bb-s">S</span> Salida (OUTPUT)</button>
+      <button class="bb" onclick="insertBlock('E')"><span class="bbb bb-e">E</span> Entrada (INPUT) <span class="kbd">Ctrl+Alt+E</span></button>
+      <button class="bb" onclick="insertBlock('S')"><span class="bbb bb-s">S</span> Salida (OUTPUT) <span class="kbd">Ctrl+Alt+S</span></button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('bl')">Bloques <span id="arr-bl">▾</span></div>
     <div class="ps-body" id="body-bl">
-      <button class="bb" onclick="insertBlock('INSTR')"><span class="bbb bb-i">I</span> Instrucción</button>
-      <button class="bb" onclick="insertBlock('ASIG')"><span class="bbb bb-i">←</span> Asignación</button>
-      <button class="bb" onclick="insertBlock('COMMENT')"><span class="bbb bb-c">/*</span> Comentario</button>
+      <button class="bb" onclick="insertBlock('INSTR')"><span class="bbb bb-i">I</span> Instrucción <span class="kbd">Ctrl+Alt+I</span></button>
+      <button class="bb" onclick="insertBlock('ASIG')"><span class="bbb bb-i">←</span> Asignación <span class="kbd">Ctrl+Alt+A</span></button>
+      <button class="bb" onclick="insertBlock('COMMENT')"><span class="bbb bb-c">/*</span> Comentario <span class="kbd">Ctrl+Alt+C</span></button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('sel')">Selección <span id="arr-sel">▾</span></div>
     <div class="ps-body" id="body-sel">
-      <button class="bb" onclick="insertBlock('IF')"><span class="bbb bb-if">IF</span> Si / No</button>
-      <button class="bb" onclick="insertBlock('SWITCH')"><span class="bbb bb-sw">SW</span> Según (SWITCH)</button>
+      <button class="bb" onclick="insertBlock('IF')"><span class="bbb bb-if">IF</span> Si / No <span class="kbd">Ctrl+Alt+Shift+I</span></button>
+      <button class="bb" onclick="insertBlock('SWITCH')"><span class="bbb bb-sw">SW</span> Según (SWITCH) <span class="kbd">Ctrl+Alt+Shift+S</span></button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('rep')">Repetición <span id="arr-rep">▾</span></div>
     <div class="ps-body" id="body-rep">
-      <button class="bb" onclick="insertBlock('WHILE')"><span class="bbb bb-wh">WH</span> Mientras (WHILE)</button>
-      <button class="bb" onclick="insertBlock('DOWHILE')"><span class="bbb bb-dw">DO</span> Hacer-Mientras (DO)</button>
-      <button class="bb" onclick="insertBlock('FOR')"><span class="bbb bb-fo">FOR</span> Para (FOR)</button>
+      <button class="bb" onclick="insertBlock('WHILE')"><span class="bbb bb-wh">WH</span> Mientras (WHILE) <span class="kbd">Ctrl+Alt+Shift+W</span></button>
+      <button class="bb" onclick="insertBlock('DOWHILE')"><span class="bbb bb-dw">DO</span> Hacer-Mientras (DO) <span class="kbd">Ctrl+Alt+Shift+D</span></button>
+      <button class="bb" onclick="insertBlock('FOR')"><span class="bbb bb-fo">FOR</span> Para (FOR) <span class="kbd">Ctrl+Alt+Shift+F</span></button>
       <button class="bb" onclick="insertBlock('FOREACH')"><span class="bbb bb-fo">FE</span> Para cada (FOREACH)</button>
     </div>
   </div>
@@ -352,7 +353,7 @@ body.hide-comments .b-com{display:none !important}
 <div class="app-footer">
   <span>NS+Gen v3.0 — Generador de Diagramas Nassi-Schneidermann</span>
   <span>·</span>
-  <span>Creado por Daniel</span>
+  <span>Creado por Daniel Antonio Caamaño</span>
   <span>·</span>
   <span>ORT Argentina · Analista de Sistemas 2026</span>
   <span>·</span>
@@ -360,7 +361,7 @@ body.hide-comments .b-com{display:none !important}
   <span>·</span>
   <span>Funciona 100% offline</span>
   <span>·</span>
-  <span title="Presioná F1 o ? para ver todos los atajos">⌨️ Atajos: Ctrl+I, Ctrl+Shift+W, Esc...</span>
+  <span title="Ctrl+Alt+I, Ctrl+Alt+Shift+W, Esc, Delete">⌨️ Atajos: Ctrl+Alt+I, Ctrl+Alt+Shift+W...</span>
   <span>·</span>
   <button onclick="toggleTheme()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:3px 8px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:14px" title="Cambiar tema"><span id="theme-icon">🌙</span></button>
 </div>
@@ -1315,6 +1316,22 @@ function render(){
   else if(mode==='copy'){ib.className='info-box mode-copy';it.textContent='Modo: copiar bloque';ii.textContent=pendingBlockId?'Bloque marcado (⎘). Clic en una zona destino para pegar la copia completa.':'Clic en ⎘ copiar sobre el bloque origen.';}
   else if(activeZone){ib.className='info-box mode-insert';it.textContent='Zona activa';let loc=activeZone.type==='if-then'?'rama Verdadero':activeZone.type==='if-else'?'rama Falso':activeZone.type==='loop'?'cuerpo del bucle':activeZone.type==='switch-case'?`caso ${activeZone.caseIdx}`:'zona principal';ii.textContent=`Insertando en: ${loc}. Elegí un bloque del panel derecho.`;}
   else{ib.className='info-box';it.textContent='Zona de inserción';ii.textContent='Líneas punteadas = zonas de inserción. Clic para activar, luego elegí un bloque del panel. ✂ mover · ⎘ copiar.';}
+  
+  // Auto-activar primera zona si el método está vacío
+  setTimeout(() => {
+    const m = methods.find(x => x.id === activeMethodId);
+    if(m && m.blocks.length === 0 && !activeZone){
+      const firstZone = document.querySelector('.iz');
+      if(firstZone && !firstZone.classList.contains('active')){
+        firstZone.classList.add('active');
+        const parent = firstZone.getAttribute('data-parent');
+        const type = firstZone.getAttribute('data-type');
+        const caseIdx = firstZone.getAttribute('data-case-idx');
+        activeZone = { parent, type, caseIdx: caseIdx ? parseInt(caseIdx) : null };
+        render();
+      }
+    }
+  }, 100);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1501,18 +1518,31 @@ let selectedBlockId = null; // ID del bloque actualmente seleccionado
 
 // Función para insertar bloque vía atajo
 function insertBlockViaShortcut(type){
+  console.log('🔧 insertBlockViaShortcut llamada con type:', type);
+  
   const activeZone = document.querySelector('.iz.active');
+  console.log('🔍 Zona activa encontrada:', activeZone ? 'SÍ' : 'NO');
+  
   if(!activeZone){
-    // No hay zona activa, intentar activar la primera disponible
+    // No hay zona activa, activar la primera disponible
     const firstZone = document.querySelector('.iz');
+    console.log('🔍 Primera zona disponible:', firstZone ? 'SÍ' : 'NO');
+    
     if(firstZone){
+      console.log('👆 Haciendo click en primera zona...');
       firstZone.click();
-      setTimeout(() => insertBlock(type), 50);
+      setTimeout(() => {
+        console.log('⏰ Timeout ejecutado, llamando insertBlock...');
+        insertBlock(type);
+      }, 50);
     } else {
-      alert('Seleccioná una zona de inserción primero (hacé clic en "Zona de inserción")');
+      console.log('❌ No hay zonas disponibles');
     }
     return;
   }
+  
+  console.log('✅ Hay zona activa, insertando directamente...');
+  console.log('📊 activeZone variable global:', activeZone);
   insertBlock(type);
 }
 
@@ -1571,36 +1601,45 @@ function highlightBlock(bid){
 
 // Listener de teclado global
 document.addEventListener('keydown', (e) => {
+  // Debug: verificar que el listener funciona
+  console.log('Key pressed:', e.key, 'Ctrl:', e.ctrlKey, 'Alt:', e.altKey, 'Shift:', e.shiftKey);
+  
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   
   const ctrl = e.ctrlKey || e.metaKey;
+  const alt = e.altKey;
   const shift = e.shiftKey;
   const key = e.key.toLowerCase();
   
-  // BLOQUES BÁSICOS
-  if(ctrl && !shift && key === 'i'){ e.preventDefault(); insertBlockViaShortcut('INSTR'); return; }
-  if(ctrl && !shift && key === 'a'){ e.preventDefault(); insertBlockViaShortcut('ASIG'); return; }
-  if(ctrl && !shift && key === 'e'){ e.preventDefault(); insertBlockViaShortcut('E'); return; }
-  if(ctrl && !shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('S'); return; }
-  if(ctrl && !shift && key === '/'){ e.preventDefault(); insertBlockViaShortcut('COMMENT'); return; }
+  // BLOQUES BÁSICOS (Ctrl + Alt + Tecla)
+  if(ctrl && alt && !shift && key === 'i'){ 
+    console.log('✓ Atajo detectado: Ctrl+Alt+I');
+    e.preventDefault(); 
+    insertBlockViaShortcut('INSTR'); 
+    return; 
+  }
+  if(ctrl && alt && !shift && key === 'a'){ e.preventDefault(); insertBlockViaShortcut('ASIG'); return; }
+  if(ctrl && alt && !shift && key === 'e'){ e.preventDefault(); insertBlockViaShortcut('E'); return; }
+  if(ctrl && alt && !shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('S'); return; }
+  if(ctrl && alt && !shift && key === 'c'){ e.preventDefault(); insertBlockViaShortcut('COMMENT'); return; }
   
-  // ESTRUCTURAS DE CONTROL
-  if(ctrl && shift && key === 'i'){ e.preventDefault(); insertBlockViaShortcut('IF'); return; }
-  if(ctrl && shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('SWITCH'); return; }
-  if(ctrl && shift && key === 'w'){ e.preventDefault(); insertBlockViaShortcut('WHILE'); return; }
-  if(ctrl && shift && key === 'd'){ e.preventDefault(); insertBlockViaShortcut('DOWHILE'); return; }
-  if(ctrl && shift && key === 'f'){ e.preventDefault(); insertBlockViaShortcut('FOR'); return; }
+  // ESTRUCTURAS DE CONTROL (Ctrl + Alt + Shift + Tecla)
+  if(ctrl && alt && shift && key === 'i'){ e.preventDefault(); insertBlockViaShortcut('IF'); return; }
+  if(ctrl && alt && shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('SWITCH'); return; }
+  if(ctrl && alt && shift && key === 'w'){ e.preventDefault(); insertBlockViaShortcut('WHILE'); return; }
+  if(ctrl && alt && shift && key === 'd'){ e.preventDefault(); insertBlockViaShortcut('DOWHILE'); return; }
+  if(ctrl && alt && shift && key === 'f'){ e.preventDefault(); insertBlockViaShortcut('FOR'); return; }
   
-  // ACCIONES
-  if(ctrl && !shift && key === 'n'){ e.preventDefault(); showAddMethod(); return; }
-  if(ctrl && !shift && key === 'g'){ e.preventDefault(); saveProject(); return; }
-  if(ctrl && !shift && key === 'v'){ e.preventDefault(); validateDiagram(); return; }
+  // ACCIONES (Ctrl + Alt + Tecla)
+  if(ctrl && alt && !shift && key === 'n'){ e.preventDefault(); showAddMethod(); return; }
+  if(ctrl && alt && !shift && key === 'g'){ e.preventDefault(); saveProject(); return; }
+  if(ctrl && alt && !shift && key === 'v'){ e.preventDefault(); validateDiagram(); return; }
   
-  // MOVIMIENTO
-  if(ctrl && !shift && key === 'arrowup'){ e.preventDefault(); moveBlockUp(); return; }
-  if(ctrl && !shift && key === 'arrowdown'){ e.preventDefault(); moveBlockDown(); return; }
+  // MOVIMIENTO (solo Ctrl, no chocan)
+  if(ctrl && !alt && !shift && key === 'arrowup'){ e.preventDefault(); moveBlockUp(); return; }
+  if(ctrl && !alt && !shift && key === 'arrowdown'){ e.preventDefault(); moveBlockDown(); return; }
   
-  // ELIMINAR Y ESCAPE
+  // ELIMINAR Y ESCAPE (sin modificadores)
   if(key === 'delete' && selectedBlockId){ e.preventDefault(); deleteSelectedBlock(); return; }
   if(key === 'escape'){
     e.preventDefault();
@@ -1610,8 +1649,8 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   
-  // NAVEGACIÓN ENTRE MÉTODOS
-  if(ctrl && !shift && key === 'tab'){
+  // NAVEGACIÓN ENTRE MÉTODOS (Ctrl + Alt + Flechas)
+  if(ctrl && alt && !shift && key === 'arrowright'){
     e.preventDefault();
     const currentIdx = methods.findIndex(m => m.id === activeMethodId);
     const nextIdx = (currentIdx + 1) % methods.length;
@@ -1620,7 +1659,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   
-  if(ctrl && shift && key === 'tab'){
+  if(ctrl && alt && !shift && key === 'arrowleft'){
     e.preventDefault();
     const currentIdx = methods.findIndex(m => m.id === activeMethodId);
     const prevIdx = (currentIdx - 1 + methods.length) % methods.length;
