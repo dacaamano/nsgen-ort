@@ -777,6 +777,17 @@ function genJava(m){
   }
   const needsScanner = hasInput(m.blocks);
   
+  // Build a map of variable types for INPUT parsing
+  let varTypes = {};
+  m.decls.filter(d=>d.type==='VAR' || d.type==='PARAM').forEach(d=>{
+    let parts = d.label.trim().split(/\s+/);
+    if(parts.length >= 2){
+      let type = parts[0];
+      let varName = parts[1].replace(/[\[\];=].*/,''); // Remove [], ; and everything after =
+      varTypes[varName] = type;
+    }
+  });
+  
   // CONST → static final class attributes
   let constAttrs=m.decls.filter(d=>d.type==='CONST')
     .map(d=>`    private static final ${d.label};`).join('\n');
@@ -793,7 +804,30 @@ function genJava(m){
     .map(d=>`        ${d.label};`).join('\n');
     
   function bc(b,ind){
-    if(b.type==='E') return `${ind}${b.label} = input.nextLine(); // INPUT\n`;
+    if(b.type==='E'){
+      // Extract variable name from label (e.g. "int numero" → "numero")
+      let parts = b.label.trim().split(/\s+/);
+      let varName = parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+      let varType = varTypes[varName] || 'String';
+      
+      // Generate appropriate parsing based on type
+      let inputCode;
+      if(varType === 'int' || varType === 'Integer'){
+        inputCode = `${varName} = Integer.parseInt(input.nextLine());`;
+      } else if(varType === 'double' || varType === 'Double'){
+        inputCode = `${varName} = Double.parseDouble(input.nextLine());`;
+      } else if(varType === 'float' || varType === 'Float'){
+        inputCode = `${varName} = Float.parseFloat(input.nextLine());`;
+      } else if(varType === 'long' || varType === 'Long'){
+        inputCode = `${varName} = Long.parseLong(input.nextLine());`;
+      } else if(varType === 'boolean' || varType === 'Boolean'){
+        inputCode = `${varName} = Boolean.parseBoolean(input.nextLine());`;
+      } else {
+        inputCode = `${varName} = input.nextLine();`;
+      }
+      
+      return `${ind}${inputCode} // INPUT ${b.label}\n`;
+    }
     if(b.type==='S') return `${ind}System.out.println(${b.label});\n`;
     if(b.type==='INSTR') return `${ind}${b.label};\n`;
     if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
@@ -814,7 +848,10 @@ function genJava(m){
   // Add scanner close at end if needed
   if(needsScanner) body += '        input.close();\n';
   
-  return `public class ${m.name} {\n${constAttrs?constAttrs+'\n':''}\n    public ${m.returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n}\n`;
+  // Add import if Scanner is needed
+  let imports = needsScanner ? 'import java.util.Scanner;\n\n' : '';
+  
+  return `${imports}public class ${m.name} {\n${constAttrs?constAttrs+'\n':''}\n    public ${m.returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n}\n`;
 }
 
 function genPython(m){
