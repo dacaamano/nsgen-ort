@@ -293,6 +293,9 @@ body.hide-comments .b-com{display:none !important}
       <button class="clt active ns" id="clt-ns" onclick="setLang('ns')">NS+ Code</button>
       <button class="clt java" id="clt-java" onclick="setLang('java')">Java</button>
       <button class="clt python" id="clt-python" onclick="setLang('python')">Python</button>
+      <button class="clt cpp" id="clt-cpp" onclick="setLang('cpp')">C++</button>
+      <button class="clt csharp" id="clt-csharp" onclick="setLang('csharp')">C#</button>
+      <button class="clt js" id="clt-js" onclick="setLang('js')">JavaScript</button>
       <button class="clt" id="clt-ascii" onclick="setLang('ascii')" style="color:#56d364">ASCII Art</button>
     </div>
     <div class="code-copy-bar">
@@ -851,6 +854,167 @@ function genPython(m){
   return `${consts?consts+'\n\n':''}class ${m.name}:\n    def ${methodName}(${params?'self, '+params:'self'}) -> ${retHint}:\n${localVars?localVars+'\n':''}${body||'        pass\n'}`;
 }
 
+function genCpp(m){
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
+  
+  // Check if there are any INPUT blocks
+  function hasInput(blocks){
+    for(const b of (blocks||[])){
+      if(b.type==='E') return true;
+      if(hasInput(b.thenBlocks)) return true;
+      if(hasInput(b.elseBlocks)) return true;
+      if(hasInput(b.bodyBlocks)) return true;
+      if(b.cases) for(const c of b.cases) if(hasInput(c.blocks)) return true;
+    }
+    return false;
+  }
+  const needsGetline = hasInput(m.blocks);
+  
+  // CONST → static const class attributes
+  let constAttrs=m.decls.filter(d=>d.type==='CONST')
+    .map(d=>`    static const ${d.label}`).join('\n');
+  
+  // VAR → local variables inside method only
+  let localVars=m.decls.filter(d=>d.type==='VAR')
+    .map(d=>`        ${d.label}`).join('\n');
+    
+  function bc(b,ind){
+    if(b.type==='E'){
+      let varName = b.label.trim().split(/\s+/).pop();
+      return `${ind}std::getline(std::cin, ${varName}); // INPUT\n`;
+    }
+    if(b.type==='S') return `${ind}std::cout << ${b.label} << std::endl;\n`;
+    if(b.type==='INSTR') return `${ind}${b.label};\n`;
+    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
+    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
+    if(b.type==='CALL') return `${ind}${b.label};\n`;
+    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
+    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
+    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
+    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
+    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for (${p.type} ${p.varName} : ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    return '';
+  }
+  
+  let body=m.blocks.map(b=>bc(b,'        ')).join('');
+  
+  let includes = needsGetline ? '#include <iostream>\n#include <string>\n\n' : '#include <iostream>\n\n';
+  
+  return `${includes}class ${m.name} {\npublic:\n${constAttrs?constAttrs+'\n\n':''}\n    ${m.returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n};\n`;
+}
+
+function genCSharp(m){
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
+  
+  // Capitalize method name for C# convention
+  let methodName = sigBase.split('(')[0].trim();
+  methodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);
+  sigBase = methodName + '(' + sigBase.split('(')[1];
+  
+  // CONST → static readonly class attributes
+  let constAttrs=m.decls.filter(d=>d.type==='CONST')
+    .map(d=>`    private static readonly ${d.label}`).join('\n');
+  
+  // VAR → local variables inside method only
+  let localVars=m.decls.filter(d=>d.type==='VAR')
+    .map(d=>`        ${d.label}`).join('\n');
+    
+  function csharpType(javaType){
+    const map = {
+      'void': 'void',
+      'int': 'int',
+      'float': 'float',
+      'double': 'double',
+      'boolean': 'bool',
+      'String': 'string',
+      'long': 'long',
+      'char': 'char'
+    };
+    return map[javaType] || javaType;
+  }
+  
+  function bc(b,ind){
+    if(b.type==='E'){
+      let varName = b.label.trim().split(/\s+/).pop();
+      return `${ind}${varName} = Console.ReadLine(); // INPUT\n`;
+    }
+    if(b.type==='S') return `${ind}Console.WriteLine(${b.label});\n`;
+    if(b.type==='INSTR') return `${ind}${b.label};\n`;
+    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
+    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
+    if(b.type==='CALL') return `${ind}${b.label};\n`;
+    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
+    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
+    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
+    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
+    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}foreach (${p.type} ${p.varName} in ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    return '';
+  }
+  
+  let body=m.blocks.map(b=>bc(b,'        ')).join('');
+  
+  let returnType = csharpType(m.returnType);
+  
+  return `using System;\n\nclass ${m.name} {\n${constAttrs?constAttrs+'\n\n':''}\n    public ${returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n}\n`;
+}
+
+function genJavaScript(m){
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
+    let parts=d.label.trim().split(/\s+/);
+    return parts.length>=2?parts[1]:parts[0];
+  }).join(', ');
+  
+  let methodName=m.sig.replace(/\(.*\)/,'').trim();
+  
+  // CONST → module-level constants
+  let consts=m.decls.filter(d=>d.type==='CONST').map(d=>{
+    let label=d.label.replace(/^final\s+/i,'').trim();
+    let parts = label.split(/\s+/);
+    let varName = parts.length >= 2 ? parts[1] : parts[0];
+    let value = parts.includes('=') ? parts.slice(parts.indexOf('=')+1).join(' ') : 'null';
+    return `const ${varName} = ${value};`;
+  }).join('\n');
+  
+  // VAR → let variables inside function
+  let localVars=m.decls.filter(d=>d.type==='VAR').map(d=>{
+    let parts = d.label.trim().split(/\s+/);
+    let varName = parts.length >= 2 ? parts[1].replace(/;$/,'') : parts[0].replace(/;$/,'');
+    let value = parts.includes('=') ? parts.slice(parts.indexOf('=')+1).join(' ').replace(/;$/,'') : 'null';
+    return `    let ${varName} = ${value};`;
+  }).join('\n');
+    
+  function bc(b,ind){
+    if(b.type==='E'){
+      let varName = b.label.trim().split(/\s+/).pop();
+      return `${ind}${varName} = prompt("${b.label}"); // INPUT\n`;
+    }
+    if(b.type==='S') return `${ind}console.log(${b.label});\n`;
+    if(b.type==='INSTR') return `${ind}${b.label};\n`;
+    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
+    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
+    if(b.type==='CALL') return `${ind}${b.label.replace(/;$/,'')};\n`;
+    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
+    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
+    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
+    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
+    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for (const ${p.varName} of ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
+    return '';
+  }
+  
+  let body=m.blocks.map(b=>bc(b,'    ')).join('');
+  
+  return `${consts?consts+'\n\n':''}function ${methodName}(${params}) {\n${localVars?localVars+'\n':''}${body}}\n`;
+}
+
+
 function toggleLineNumbers(){
   showLineNumbers = !showLineNumbers;
   const btn = document.getElementById('line-num-btn');
@@ -860,17 +1024,24 @@ function toggleLineNumbers(){
 
 function renderCodeView(){
   let saved=activeMethodId;
-  let allNS    =methods.map(m=>{activeMethodId=m.id;return `--- ${m.name}: ${m.sig} ---\n`+genNS(m);}).join('\n');
-  let allJava  =methods.map(m=>{activeMethodId=m.id;return genJava(m);}).join('\n\n');
-  let allPython=methods.map(m=>{activeMethodId=m.id;return genPython(m);}).join('\n\n');
-  let allASCII =methods.map(m=>{activeMethodId=m.id;return genASCII(m);}).join('\n\n');
+  let allNS      =methods.map(m=>{activeMethodId=m.id;return `--- ${m.name}: ${m.sig} ---\n`+genNS(m);}).join('\n');
+  let allJava    =methods.map(m=>{activeMethodId=m.id;return genJava(m);}).join('\n\n');
+  let allPython  =methods.map(m=>{activeMethodId=m.id;return genPython(m);}).join('\n\n');
+  let allCpp     =methods.map(m=>{activeMethodId=m.id;return genCpp(m);}).join('\n\n');
+  let allCSharp  =methods.map(m=>{activeMethodId=m.id;return genCSharp(m);}).join('\n\n');
+  let allJS      =methods.map(m=>{activeMethodId=m.id;return genJavaScript(m);}).join('\n\n');
+  let allASCII   =methods.map(m=>{activeMethodId=m.id;return genASCII(m);}).join('\n\n');
   activeMethodId=saved;
   
   let content = '';
   if(currentLang==='ns')         content = allNS;
   else if(currentLang==='java')  content = allJava;
+  else if(currentLang==='python') content = allPython;
+  else if(currentLang==='cpp')   content = allCpp;
+  else if(currentLang==='csharp') content = allCSharp;
+  else if(currentLang==='js')    content = allJS;
   else if(currentLang==='ascii') content = allASCII;
-  else                           content = allPython;
+  else                           content = allNS;
   
   // Add line numbers if enabled
   if(showLineNumbers){
