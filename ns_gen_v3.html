@@ -26,7 +26,7 @@
 
 <!--
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                              NS+Gen v3.0                                   ║
+║                              NS+Gen v3.2                                   ║
 ║            Generador de Diagramas Nassi-Schneidermann Plus                ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
@@ -122,13 +122,21 @@ h1{font-size:13px}
 
 /* ── CODE PANEL ── */
 .code-panel{flex:1;overflow:auto;display:flex;flex-direction:column;background:var(--code-bg)}
+.manual-panel{flex:1;overflow:auto;background:var(--code-bg);padding:40px;color:var(--code-text)}
+.manual-content{max-width:800px;margin:0 auto;line-height:1.8}
+.manual-content h1{color:var(--code-text);margin-top:0;font-size:32px}
+.manual-content h2{color:var(--code-text);margin-top:32px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px}
+.manual-content p{margin:16px 0}
+.manual-content code{background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:3px;font-family:monospace}
 .code-lang-tabs{display:flex;border-bottom:1px solid var(--code-border);flex-shrink:0}
 .clt{font-size:11px;padding:7px 16px;cursor:pointer;color:var(--code-text);background:transparent;border:none;border-bottom:2px solid transparent;font-weight:500}
 .clt:hover{color:#e6edf3}
 .clt.active.ns{color:var(--ns-green);border-bottom-color:var(--ns-green)}
 .clt.active.java{color:var(--java-blue);border-bottom-color:var(--java-blue)}
 .clt.active.python{color:var(--py-orange);border-bottom-color:var(--py-orange)}
-.code-copy-bar{display:flex;justify-content:flex-end;padding:5px 10px;background:#161b22;border-bottom:1px solid var(--code-border);flex-shrink:0}
+.code-copy-bar{display:flex;justify-content:flex-end;align-items:center;padding:5px 10px;background:#161b22;border-bottom:1px solid var(--code-border);flex-shrink:0;gap:8px}
+.notification{color:#58a6ff;font-size:13px;margin-left:auto;opacity:0;transition:opacity 0.3s}
+.notification.show{opacity:1}
 .code-copy-bar button{font-size:11px;padding:3px 10px;border:0.5px solid var(--code-border);border-radius:var(--radius);background:#21262d;color:var(--code-text);cursor:pointer}
 .code-copy-bar button:hover{background:#30363d;color:#e6edf3}
 .code-block{flex:1;overflow:auto;padding:14px 18px;font-family:'Consolas','Fira Code',monospace;font-size:12px;line-height:1.75;white-space:pre;color:#e6edf3}
@@ -246,6 +254,21 @@ body.presentation-mode .zone-bar:hover{min-height:10px;color:transparent;border-
 /* ── FOOTER ── */
 .app-footer{grid-column:1/-1;display:flex;align-items:center;justify-content:center;padding:5px;background:#0f2550;font-size:10px;color:rgba(255,255,255,0.4);gap:16px;flex-shrink:0}
 
+/* ── WELCOME SCREEN ── */
+.welcome-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.welcome-box{background:linear-gradient(135deg,#1a3a6e 0%,#2d5a9e 100%);border-radius:16px;padding:48px;max-width:500px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1)}
+.welcome-box h1{font-size:48px;margin:0 0 8px 0;color:#fff;font-weight:700}
+.welcome-subtitle{font-size:18px;color:rgba(255,255,255,0.8);margin:0 0 16px 0}
+.welcome-desc{font-size:14px;color:rgba(255,255,255,0.7);margin:0 0 32px 0;line-height:1.6}
+.welcome-buttons{display:flex;gap:16px;margin-bottom:24px}
+.welcome-btn-primary{flex:1;background:#58a6ff;color:#fff;border:none;border-radius:8px;padding:24px 16px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.2s;line-height:1.4}
+.welcome-btn-primary:hover{background:#4493e6;transform:translateY(-2px);box-shadow:0 8px 20px rgba(88,166,255,0.4)}
+.welcome-btn-secondary{flex:1;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:24px 16px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.2s;line-height:1.4}
+.welcome-btn-secondary:hover{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3)}
+.welcome-checkbox{display:flex;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;margin-bottom:24px}
+.welcome-checkbox input{cursor:pointer}
+.welcome-footer{font-size:12px;color:rgba(255,255,255,0.5);margin:0}
+
 /* ── PRESENTATION MODE ── */
 body.presentation-mode .zone-bar{display:none !important}
 body.presentation-mode .bacts{display:none !important}
@@ -273,6 +296,7 @@ body.hide-comments .b-com{display:none !important}
   <div class="topbar-sep"></div>
   <button class="view-tab active" id="vt-v" onclick="setView('visual')">Diagrama</button>
   <button class="view-tab" id="vt-c" onclick="setView('code')">Código</button>
+  <button class="view-tab" id="vt-m" onclick="setView('manual')">📖 Manual</button>
   <button class="view-tab" id="vt-pres" onclick="togglePresentation()" style="margin-left:8px">📽 Presentación</button>
   <button class="view-tab" id="vt-comm" onclick="toggleComments()" style="display:none">💬 Comentarios</button>
 </div>
@@ -300,9 +324,16 @@ body.hide-comments .b-com{display:none !important}
     </div>
     <div class="code-copy-bar">
       <button onclick="toggleLineNumbers()" id="line-num-btn" style="margin-right:8px">🔢 Numeración</button>
-      <button onclick="copyCode()">Copiar código</button>
+      <button onclick="copyCode()" id="copy-btn">Copiar código</button>
+      <div id="notification" class="notification"></div>
     </div>
     <div class="code-block ns" id="codeBlock"></div>
+  </div>
+  <div id="viewManual" class="manual-panel" style="display:none">
+    <div class="manual-content" id="manualContent">
+      <h1>📖 Manual de Usuario - NS+Gen</h1>
+      <p style="color:#888">Cargando manual...</p>
+    </div>
   </div>
 </div>
 
@@ -310,31 +341,31 @@ body.hide-comments .b-com{display:none !important}
   <div>
     <div class="ps-hdr" onclick="toggleSec('es')">Entrada / Salida <span id="arr-es">▾</span></div>
     <div class="ps-body" id="body-es">
-      <button class="bb" onclick="insertBlock('E')"><span class="bbb bb-e">E</span> Entrada (INPUT) <span class="kbd">Ctrl+Alt+E</span></button>
-      <button class="bb" onclick="insertBlock('S')"><span class="bbb bb-s">S</span> Salida (OUTPUT) <span class="kbd">Ctrl+Alt+S</span></button>
+      <button class="bb" onclick="insertBlock('E')"><span class="bbb bb-e">E</span> Entrada (INPUT) </button>
+      <button class="bb" onclick="insertBlock('S')"><span class="bbb bb-s">S</span> Salida (OUTPUT) </button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('bl')">Bloques <span id="arr-bl">▾</span></div>
     <div class="ps-body" id="body-bl">
-      <button class="bb" onclick="insertBlock('INSTR')"><span class="bbb bb-i">I</span> Instrucción <span class="kbd">Ctrl+Alt+I</span></button>
-      <button class="bb" onclick="insertBlock('ASIG')"><span class="bbb bb-i">←</span> Asignación <span class="kbd">Ctrl+Alt+A</span></button>
-      <button class="bb" onclick="insertBlock('COMMENT')"><span class="bbb bb-c">/*</span> Comentario <span class="kbd">Ctrl+Alt+C</span></button>
+      <button class="bb" onclick="insertBlock('INSTR')"><span class="bbb bb-i">I</span> Instrucción </button>
+      <button class="bb" onclick="insertBlock('ASIG')"><span class="bbb bb-i">←</span> Asignación </button>
+      <button class="bb" onclick="insertBlock('COMMENT')"><span class="bbb bb-c">/*</span> Comentario </button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('sel')">Selección <span id="arr-sel">▾</span></div>
     <div class="ps-body" id="body-sel">
-      <button class="bb" onclick="insertBlock('IF')"><span class="bbb bb-if">IF</span> Si / No <span class="kbd">Ctrl+Alt+Shift+I</span></button>
-      <button class="bb" onclick="insertBlock('SWITCH')"><span class="bbb bb-sw">SW</span> Según (SWITCH) <span class="kbd">Ctrl+Alt+Shift+S</span></button>
+      <button class="bb" onclick="insertBlock('IF')"><span class="bbb bb-if">IF</span> Si / No </button>
+      <button class="bb" onclick="insertBlock('SWITCH')"><span class="bbb bb-sw">SW</span> Según (SWITCH) </button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('rep')">Repetición <span id="arr-rep">▾</span></div>
     <div class="ps-body" id="body-rep">
-      <button class="bb" onclick="insertBlock('WHILE')"><span class="bbb bb-wh">WH</span> Mientras (WHILE) <span class="kbd">Ctrl+Alt+Shift+W</span></button>
-      <button class="bb" onclick="insertBlock('DOWHILE')"><span class="bbb bb-dw">DO</span> Hacer-Mientras (DO) <span class="kbd">Ctrl+Alt+Shift+D</span></button>
-      <button class="bb" onclick="insertBlock('FOR')"><span class="bbb bb-fo">FOR</span> Para (FOR) <span class="kbd">Ctrl+Alt+Shift+F</span></button>
+      <button class="bb" onclick="insertBlock('WHILE')"><span class="bbb bb-wh">WH</span> Mientras (WHILE) </button>
+      <button class="bb" onclick="insertBlock('DOWHILE')"><span class="bbb bb-dw">DO</span> Hacer-Mientras (DO) </button>
+      <button class="bb" onclick="insertBlock('FOR')"><span class="bbb bb-fo">FOR</span> Para (FOR) </button>
       <button class="bb" onclick="insertBlock('FOREACH')"><span class="bbb bb-fo">FE</span> Para cada (FOREACH)</button>
     </div>
   </div>
@@ -353,8 +384,35 @@ body.hide-comments .b-com{display:none !important}
   <button class="cancel-btn" id="cancelBtn" style="display:none" onclick="cancelMode()">Cancelar operación</button>
 </div>
 
+<!-- Welcome Screen -->
+<div id="welcomeScreen" class="welcome-overlay" style="display:none">
+  <div class="welcome-box">
+    <h1>🎨 NS+Gen</h1>
+    <p class="welcome-subtitle">Generador de Diagramas Nassi-Schneidermann</p>
+    <p class="welcome-desc">Creá diagramas visuales y exportá código a Java, Python, C++, C#, JavaScript y más.</p>
+    
+    <div class="welcome-buttons">
+      <button class="welcome-btn-primary" onclick="closeWelcome()">
+        <span style="font-size:24px">+</span><br>
+        Nuevo Diagrama
+      </button>
+      <button class="welcome-btn-secondary" onclick="closeWelcome();setView('manual')">
+        📖<br>
+        Ver Manual
+      </button>
+    </div>
+    
+    <label class="welcome-checkbox">
+      <input type="checkbox" id="dontShowWelcome" onchange="saveWelcomePreference()">
+      No mostrar esto nuevamente en esta sesión
+    </label>
+    
+    <p class="welcome-footer">ORT Argentina · Analista de Sistemas 2026</p>
+  </div>
+</div>
+
 <div class="app-footer">
-  <span>NS+Gen v3.0 — Generador de Diagramas Nassi-Schneidermann</span>
+  <span>NS+Gen v3.2 — Generador de Diagramas Nassi-Schneidermann</span>
   <span>·</span>
   <span>Creado por Daniel Antonio Caamaño</span>
   <span>·</span>
@@ -363,8 +421,6 @@ body.hide-comments .b-com{display:none !important}
   <span title="Licencia MIT - Código Abierto">📄 MIT License</span>
   <span>·</span>
   <span>Funciona 100% offline</span>
-  <span>·</span>
-  <span title="Ctrl+Alt+I, Ctrl+Alt+Shift+W, Esc, Delete">⌨️ Atajos: Ctrl+Alt+I, Ctrl+Alt+Shift+W...</span>
   <span>·</span>
   <button onclick="toggleTheme()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:3px 8px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:14px" title="Cambiar tema"><span id="theme-icon">🌙</span></button>
 </div>
@@ -385,6 +441,9 @@ let presentationMode=false;
 let showComments=true;
 let autoSaveTimer=null;
 let darkTheme=false;
+let isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let showLeftPanel=!isMobile;
+let showRightPanel=true;
 let showLineNumbers=false;
 const HISTORY_LIMIT=10;
 const AUTOSAVE_INTERVAL=30000; // 30 seconds
@@ -397,9 +456,12 @@ function setView(v){
   currentView=v;
   document.getElementById('viewVisual').style.display=v==='visual'?'flex':'none';
   document.getElementById('viewCode').style.display=v==='code'?'flex':'none';
+  document.getElementById('viewManual').style.display=v==='manual'?'block':'none';
   document.getElementById('vt-v').classList.toggle('active',v==='visual');
   document.getElementById('vt-c').classList.toggle('active',v==='code');
+  document.getElementById('vt-m').classList.toggle('active',v==='manual');
   if(v==='code') renderCodeView();
+  if(v==='manual') renderManual();
 }
 
 function setLang(lang){
@@ -1093,13 +1155,110 @@ function renderCodeView(){
   document.getElementById('codeBlock').textContent = content;
 }
 
+function renderManual(){
+  const manualHTML = `
+    <h1>📖 Manual de Usuario - NS+Gen v3.2</h1>
+    
+    <p><strong>NS+Gen</strong> es un generador visual de diagramas Nassi-Schneidermann con exportación automática a múltiples lenguajes de programación.</p>
+    
+    <h2>🎯 Inicio Rápido</h2>
+    <p><strong>1. Crear un método:</strong> Click en "+ Nuevo" en el panel izquierdo</p>
+    <p><strong>2. Declarar variables:</strong> Usa los botones "+ VAR", "+ CONST", "+ PARAM"</p>
+    <p><strong>3. Agregar bloques:</strong> Click en "Zona de inserción" y luego en un bloque del panel derecho</p>
+    <p><strong>4. Exportar código:</strong> Click en "Código" y seleccioná el lenguaje (Java, Python, C++, C#, JavaScript)</p>
+    
+    <h2>📦 Bloques Disponibles</h2>
+    <p><strong>Entrada/Salida:</strong></p>
+    <p>• <code>E</code> - Entrada (INPUT): Lee datos del usuario</p>
+    <p>• <code>S</code> - Salida (OUTPUT): Muestra datos en pantalla</p>
+    
+    <p><strong>Bloques básicos:</strong></p>
+    <p>• <code>I</code> - Instrucción: Cualquier operación</p>
+    <p>• <code>←</code> - Asignación: <code>variable = valor</code></p>
+    <p>• <code>/*</code> - Comentario: Notas y documentación</p>
+    
+    <p><strong>Selección:</strong></p>
+    <p>• <code>IF</code> - Si/No: Decisión condicional (Verdadero/Falso)</p>
+    <p>• <code>SW</code> - Según (SWITCH): Múltiples casos</p>
+    
+    <p><strong>Repetición:</strong></p>
+    <p>• <code>WH</code> - Mientras (WHILE): Repite mientras condición sea verdadera</p>
+    <p>• <code>DO</code> - Hacer-Mientras (DO-WHILE): Ejecuta al menos una vez</p>
+    <p>• <code>FOR</code> - Para (FOR): Repite un número determinado de veces</p>
+    <p>• <code>FE</code> - Para cada (FOREACH): Itera sobre colecciones</p>
+    
+    <p><strong>Funciones/Métodos:</strong></p>
+    <p>• <code>⇒</code> - Llamada: Invoca otro método</p>
+    <p>• <code>↩</code> - Return: Devuelve un valor</p>
+    
+    <h2>💾 Guardar y Cargar</h2>
+    <p><strong>Guardar:</strong> Click en "💾 Guardar" - Descarga archivo .nsgen con tu proyecto</p>
+    <p><strong>Cargar:</strong> Click en "📂 Cargar" - Abre un archivo .nsgen guardado</p>
+    <p><strong>Historial:</strong> Click en "📚 Historial" - Recupera versiones anteriores (últimas 10)</p>
+    <p><strong>Autoguardado:</strong> Se guarda automáticamente cada 30 segundos en tu navegador</p>
+    
+    <h2>✓ Validación</h2>
+    <p>Click en "✓ Validar" para verificar tu diagrama. Detecta:</p>
+    <p>• Bloques sin condición (IF, WHILE sin condición)</p>
+    <p>• Bloques sin contenido (WHILE vacío)</p>
+    <p>• Entradas/Salidas vacías</p>
+    <p>• Estructuras incompletas</p>
+    
+    <h2>📤 Exportación de Código</h2>
+    <p><strong>Lenguajes soportados:</strong></p>
+    <p>• <strong>Java:</strong> Con Scanner automático y parsing por tipo</p>
+    <p>• <strong>Python:</strong> Con type hints y input()</p>
+    <p>• <strong>C++:</strong> Con std::cout y std::getline</p>
+    <p>• <strong>C#:</strong> Con Console.ReadLine y WriteLine</p>
+    <p>• <strong>JavaScript:</strong> Con console.log y prompt</p>
+    <p>• <strong>NS+ Code:</strong> Pseudocódigo estructurado</p>
+    <p>• <strong>ASCII Art:</strong> Diagrama en texto plano</p>
+    
+    <h2>📱 Uso en Android</h2>
+    <p><strong>Instalación:</strong></p>
+    <p>1. Abrí Chrome en tu Android</p>
+    <p>2. Andá a la URL de NS+Gen</p>
+    <p>3. Menú (⋮) → "Agregar a pantalla de inicio"</p>
+    <p>4. ¡Ya tenés la app instalada!</p>
+    
+    <p><strong>Funciona offline:</strong> Después de la primera carga, no necesitás internet</p>
+    
+    <h2>🎨 Modo Presentación</h2>
+    <p>Click en "📽 Presentación" para mostrar diagramas en pantalla completa sin herramientas de edición. Ideal para exponer en clase.</p>
+    
+    <h2>💡 Consejos</h2>
+    <p>• Declarar todas las variables antes de usarlas</p>
+    <p>• Usar nombres descriptivos para variables</p>
+    <p>• Validar el diagrama antes de exportar</p>
+    <p>• Guardar frecuentemente (aunque hay autoguardado)</p>
+    <p>• En Java: especificar tipos correctos para INPUT (int, double, float, String)</p>
+    
+    <h2>📄 Licencia</h2>
+    <p>NS+Gen es <strong>código abierto</strong> bajo licencia MIT.</p>
+    <p>Creado por <strong>Daniel Antonio Caamaño</strong> - ORT Argentina 2026</p>
+    <p>Donado a ORT Argentina para uso educativo</p>
+  `;
+  
+  document.getElementById('manualContent').innerHTML = manualHTML;
+}
+
 function copyCode(){
   navigator.clipboard.writeText(document.getElementById('codeBlock').textContent)
     .then(()=>{
-      let btn=document.querySelector('.code-copy-bar button');
-      btn.textContent='¡Copiado!';
-      setTimeout(()=>btn.textContent='Copiar código',1500);
+      showNotification('✓ Código copiado al portapapeles');
+    })
+    .catch(()=>{
+      showNotification('⚠ Error al copiar');
     });
+}
+
+function showNotification(msg){
+  const notif = document.getElementById('notification');
+  if(notif){
+    notif.textContent = msg;
+    notif.classList.add('show');
+    setTimeout(()=>notif.classList.remove('show'), 2000);
+  }
 }
 
 function clearMethod(){
@@ -1357,12 +1516,21 @@ function validateMethod(m){
 
   function checkBlocks(blocks, ctx){
     for(const b of (blocks||[])){
+      // Check conditions
       if(b.type==='IF'&&!b.cond.trim())      errors.push(`IF sin condición${ctx?` (en ${ctx})`:''}.`);
       if(b.type==='WHILE'&&!b.cond.trim())   errors.push(`WHILE sin condición${ctx?` (en ${ctx})`:''}.`);
       if(b.type==='DOWHILE'&&!b.cond.trim()) errors.push(`DO-WHILE sin condición${ctx?` (en ${ctx})`:''}.`);
       if(b.type==='SWITCH'&&!b.expr.trim())  errors.push(`SWITCH sin expresión${ctx?` (en ${ctx})`:''}.`);
       if((b.type==='FOR'||b.type==='FOREACH')&&!b.header.trim()) errors.push(`FOR sin parámetros${ctx?` (en ${ctx})`:''}.`);
       if((b.type==='E'||b.type==='S')&&!b.label.trim()) errors.push(`${b.type==='E'?'INPUT':'OUTPUT'} vacío${ctx?` (en ${ctx})`:''}.`);
+      
+      // Check empty bodies
+      if(b.type==='WHILE'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`WHILE sin contenido${ctx?` (en ${ctx})`:''}.`);
+      if(b.type==='DOWHILE'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`DO-WHILE sin contenido${ctx?` (en ${ctx})`:''}.`);
+      if(b.type==='FOR'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`FOR sin contenido${ctx?` (en ${ctx})`:''}.`);
+      if(b.type==='FOREACH'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`FOREACH sin contenido${ctx?` (en ${ctx})`:''}.`);
+      if(b.type==='IF'&&(!b.thenBlocks||b.thenBlocks.length===0)&&(!b.elseBlocks||b.elseBlocks.length===0)) errors.push(`IF completamente vacío${ctx?` (en ${ctx})`:''}.`);
+      
       // Recurse
       checkBlocks(b.thenBlocks, 'IF-Verdadero');
       checkBlocks(b.elseBlocks, 'IF-Falso');
@@ -1667,6 +1835,24 @@ function triggerSave(){
   saveToHistory();
 }
 
+function showWelcome(){
+  document.getElementById('welcomeScreen').style.display = 'flex';
+}
+
+function closeWelcome(){
+  document.getElementById('welcomeScreen').style.display = 'none';
+  if(methods.length === 0) showAddMethod();
+}
+
+function saveWelcomePreference(){
+  const checkbox = document.getElementById('dontShowWelcome');
+  if(checkbox.checked){
+    sessionStorage.setItem('nsgen_hideWelcome', 'true');
+  } else {
+    sessionStorage.removeItem('nsgen_hideWelcome');
+  }
+}
+
 function init(){
   // Load theme preference
   const savedTheme = localStorage.getItem('nsgen_theme');
@@ -1692,7 +1878,11 @@ function init(){
     console.error('Error loading last session:', e);
   }
   
-  if(methods.length === 0){
+  // Show welcome screen if no methods and not dismissed
+  const hideWelcome = sessionStorage.getItem('nsgen_hideWelcome');
+  if(methods.length === 0 && !hideWelcome){
+    showWelcome();
+  } else if(methods.length === 0){
     showAddMethod();
   } else {
     render();
