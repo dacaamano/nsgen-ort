@@ -1841,7 +1841,20 @@ function showWelcome(){
 
 function closeWelcome(){
   document.getElementById('welcomeScreen').style.display = 'none';
-  if(methods.length === 0) showAddMethod();
+  if(methods.length === 0){
+    // Auto-create first method
+    methods.push({
+      id: idC++,
+      name: 'Metodo1',
+      sig: 'main()',
+      returnType: 'void',
+      decls: [],
+      blocks: []
+    });
+    activeMethodId = methods[0].id;
+    render();
+    triggerSave();
+  }
 }
 
 function saveWelcomePreference(){
@@ -2213,7 +2226,7 @@ Hacer FOR con el mismo azul que WHILE:
   .for-body::before { border-color: #B8D9F5; }
 
 Hacer el texto de condiciones más grande:
-  .lp-hdr input { font-size: 14px } 
+  .lp-hdr input { font-size: 14px }
   .ns-if-hdr input { font-size: 14px }
 
 Darle más espacio a las declaraciones:
