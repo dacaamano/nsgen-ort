@@ -26,7 +26,7 @@
 
 <!--
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                              NS+Gen v3.2                                   ║
+║                              NS+Gen v3.3                                   ║
 ║            Generador de Diagramas Nassi-Schneidermann Plus                ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
@@ -186,12 +186,13 @@ h1{font-size:13px}
 .lp-tag{font-size:10px;font-weight:700;color:#0C447C;margin-right:7px;min-width:58px;letter-spacing:0.3px}
 .lp-body{min-height:28px;position:relative;padding-left:25px}
 .lp-body::before{content:'';position:absolute;top:0;left:0;width:20px;height:100%;border-top:20px solid #B8D9F5;border-left:20px solid #B8D9F5;pointer-events:none;box-sizing:border-box}
-/* FOR - lila #C5B5E8 */
-.for-hdr{background:#C5B5E8;display:flex;align-items:center;padding:5px 9px;font-size:12px;font-family:monospace;border-top:1px solid var(--blue)}
-.for-hdr input{color:#534AB7;background:transparent;border:none;font-size:12px;flex:1;font-family:monospace}
-.for-tag{color:#534AB7}
-.for-body{padding-left:25px;position:relative}
+/* FOR specific: techo + pared izq + piso */
+.for-hdr{background:#C5B5E8 !important}
+.for-hdr input{color:#534AB7 !important}
+.for-tag{color:#534AB7 !important}
+.for-body{border-bottom:none;padding-left:25px;position:relative;padding-bottom:20px}
 .for-body::before{content:'';position:absolute;top:0;left:0;width:20px;height:100%;border-top:20px solid #C5B5E8;border-left:20px solid #C5B5E8;pointer-events:none;box-sizing:border-box}
+.for-body::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:20px;background:#C5B5E8;pointer-events:none;border-top:1px solid var(--blue)}
 /* DO-WHILE - verde #D4ECC2 */
 .dw-body{min-height:28px;position:relative;padding-left:25px}
 .dw-body::before{content:'';position:absolute;top:0;left:0;width:20px;height:100%;border-left:20px solid #D4ECC2;pointer-events:none;box-sizing:border-box}
@@ -238,7 +239,6 @@ body.presentation-mode .zone-bar:hover{min-height:10px;color:transparent;border-
 .bb-if{background:var(--purple-light);color:#3C3489}.bb-sw{background:var(--amber-light);color:#854F0B}
 .bb-wh{background:var(--green-light);color:#085041}.bb-dw{background:#EAF3DE;color:#27500A}.bb-fo{background:#E6F1FB;color:#0C447C}
 .bb-ca{background:#fdf0f7;color:#72243E}.bb-re{background:#fffbea;color:#633806}
-.kbd{margin-left:auto;font-size:9px;color:var(--text3);font-family:monospace;white-space:nowrap;opacity:0.7}
 
 /* ── INFO BOX ── */
 .info-box{padding:9px 10px;font-size:11px;margin:6px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);flex-shrink:0}
@@ -344,31 +344,31 @@ body.hide-comments .b-com{display:none !important}
   <div>
     <div class="ps-hdr" onclick="toggleSec('es')">Entrada / Salida <span id="arr-es">▾</span></div>
     <div class="ps-body" id="body-es">
-      <button class="bb" onclick="insertBlock('E')"><span class="bbb bb-e">E</span> Entrada (INPUT) </button>
-      <button class="bb" onclick="insertBlock('S')"><span class="bbb bb-s">S</span> Salida (OUTPUT) </button>
+      <button class="bb" onclick="insertBlock('E')"><span class="bbb bb-e">E</span> Entrada (INPUT)</button>
+      <button class="bb" onclick="insertBlock('S')"><span class="bbb bb-s">S</span> Salida (OUTPUT)</button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('bl')">Bloques <span id="arr-bl">▾</span></div>
     <div class="ps-body" id="body-bl">
-      <button class="bb" onclick="insertBlock('INSTR')"><span class="bbb bb-i">I</span> Instrucción </button>
-      <button class="bb" onclick="insertBlock('ASIG')"><span class="bbb bb-i">←</span> Asignación </button>
-      <button class="bb" onclick="insertBlock('COMMENT')"><span class="bbb bb-c">/*</span> Comentario </button>
+      <button class="bb" onclick="insertBlock('INSTR')"><span class="bbb bb-i">I</span> Instrucción</button>
+      <button class="bb" onclick="insertBlock('ASIG')"><span class="bbb bb-i">←</span> Asignación</button>
+      <button class="bb" onclick="insertBlock('COMMENT')"><span class="bbb bb-c">/*</span> Comentario</button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('sel')">Selección <span id="arr-sel">▾</span></div>
     <div class="ps-body" id="body-sel">
-      <button class="bb" onclick="insertBlock('IF')"><span class="bbb bb-if">IF</span> Si / No </button>
-      <button class="bb" onclick="insertBlock('SWITCH')"><span class="bbb bb-sw">SW</span> Según (SWITCH) </button>
+      <button class="bb" onclick="insertBlock('IF')"><span class="bbb bb-if">IF</span> Si / No</button>
+      <button class="bb" onclick="insertBlock('SWITCH')"><span class="bbb bb-sw">SW</span> Según (SWITCH)</button>
     </div>
   </div>
   <div>
     <div class="ps-hdr" onclick="toggleSec('rep')">Repetición <span id="arr-rep">▾</span></div>
     <div class="ps-body" id="body-rep">
-      <button class="bb" onclick="insertBlock('WHILE')"><span class="bbb bb-wh">WH</span> Mientras (WHILE) </button>
-      <button class="bb" onclick="insertBlock('DOWHILE')"><span class="bbb bb-dw">DO</span> Hacer-Mientras (DO) </button>
-      <button class="bb" onclick="insertBlock('FOR')"><span class="bbb bb-fo">FOR</span> Para (FOR) </button>
+      <button class="bb" onclick="insertBlock('WHILE')"><span class="bbb bb-wh">WH</span> Mientras (WHILE)</button>
+      <button class="bb" onclick="insertBlock('DOWHILE')"><span class="bbb bb-dw">DO</span> Hacer-Mientras (DO)</button>
+      <button class="bb" onclick="insertBlock('FOR')"><span class="bbb bb-fo">FOR</span> Para (FOR)</button>
       <button class="bb" onclick="insertBlock('FOREACH')"><span class="bbb bb-fo">FE</span> Para cada (FOREACH)</button>
     </div>
   </div>
@@ -415,7 +415,7 @@ body.hide-comments .b-com{display:none !important}
 </div>
 
 <div class="app-footer">
-  <span>NS+Gen v3.2 — Generador de Diagramas Nassi-Schneidermann</span>
+  <span>NS+Gen v3.3 — Generador de Diagramas Nassi-Schneidermann</span>
   <span>·</span>
   <span>Creado por Daniel Antonio Caamaño</span>
   <span>·</span>
@@ -433,7 +433,7 @@ body.hide-comments .b-com{display:none !important}
 <script>
 let methods=[];
 let activeMethodId=null;
-let idC=300;
+let idC=1000;
 let collapsedSecs={};
 let currentView='visual';
 let currentLang='ns';
@@ -469,7 +469,7 @@ function setView(v){
 
 function setLang(lang){
   currentLang=lang;
-  ['ns','java','python','ascii'].forEach(l=>{
+  ['ns','java','python','cpp','csharp','js','ascii'].forEach(l=>{
     let el=document.getElementById('clt-'+l);
     if(el) el.classList.toggle('active',l===lang);
   });
@@ -582,7 +582,7 @@ function editMethodReturn(){
 
 function addDecl(type){
   let m=getActive(),label=type==='VAR'?'int nombre':type==='CONST'?'final int NOMBRE = valor':'int parametro';
-  m.decls.push({id:mid(),type,label});render();
+  m.decls.push({id:mid(),type,label});render();triggerSave();
 }
 function removeDecl(id){getActive().decls=getActive().decls.filter(d=>d.id!==id);render();}
 function updateDecl(id,val){let d=getActive().decls.find(x=>x.id===id);if(d)d.label=val;if(currentView==='code')renderCodeView();}
@@ -1239,6 +1239,12 @@ function renderManual(){
     <p>• <code>⇒</code> - Llamada: Invoca otro método</p>
     <p>• <code>↩</code> - Return: Devuelve un valor</p>
     
+    <h2>⌨ Atajos de Teclado</h2>
+    <p>• <code>Escape</code> → Cancela la zona activa, el modo actual y cualquier selección. Funciona incluso si el cursor está dentro de un campo de texto.</p>
+    <p>• <code>Ctrl+↑ / Ctrl+↓</code> → Mueve el bloque seleccionado hacia arriba o abajo dentro de su contenedor.</p>
+    <p>• <code>Delete</code> → Elimina el bloque seleccionado (pide confirmación).</p>
+    <p>• <code>Ctrl+Alt+→ / ←</code> → Navega entre métodos cuando hay más de uno abierto.</p>
+
     <h2>💾 Guardar y Cargar</h2>
     <p><strong>Guardar:</strong> Click en "💾 Guardar" - Descarga archivo .nsgen con tu proyecto</p>
     <p><strong>Cargar:</strong> Click en "📂 Cargar" - Abre un archivo .nsgen guardado</p>
@@ -1969,40 +1975,37 @@ function init(){
 init();
 
 // ═══════════════════════════════════════════════════════════════════════════
-// KEYBOARD SHORTCUTS SYSTEM
+// TECLADO Y SELECCIÓN DE BLOQUES
 // ═══════════════════════════════════════════════════════════════════════════
 
-let selectedBlockId = null; // ID del bloque actualmente seleccionado
+let selectedBlockId = null;
 
-// Función para insertar bloque vía atajo
-function insertBlockViaShortcut(type){
-  const activeZone = document.querySelector('.iz.active');
-  
-  if(!activeZone){
-    // No hay zona activa, activar la primera disponible
-    const firstZone = document.querySelector('.iz');
-    if(firstZone){
-      firstZone.click();
-      setTimeout(() => insertBlock(type), 50);
+// Busca un bloque por ID y devuelve {block, parent, siblings}
+function findBlockById(id){
+  function search(arr, parent){
+    for(let i=0;i<arr.length;i++){
+      if(arr[i].id==id) return {block:arr[i], parent, siblings:arr, index:i};
+      let b=arr[i], r=null;
+      if(b.thenBlocks) r=search(b.thenBlocks,b);
+      if(!r&&b.elseBlocks) r=search(b.elseBlocks,b);
+      if(!r&&b.bodyBlocks) r=search(b.bodyBlocks,b);
+      if(!r&&b.cases){for(let c of b.cases){r=search(c.blocks,b);if(r)break;}}
+      if(r) return r;
     }
-    return;
+    return null;
   }
-  
-  insertBlock(type);
+  let m=getActive();
+  return m ? search(m.blocks, m) : null;
 }
 
 // Función para mover bloque hacia arriba
 function moveBlockUp(){
   if(!selectedBlockId) return;
-  const block = findBlockById(selectedBlockId);
-  if(!block || !block.parent) return;
-  
-  const siblings = block.parent.blocks || block.parent.thenBlocks || block.parent.elseBlocks || block.parent.bodyBlocks;
-  if(!siblings) return;
-  
-  const idx = siblings.indexOf(block.block);
-  if(idx > 0){
-    [siblings[idx], siblings[idx-1]] = [siblings[idx-1], siblings[idx]];
+  const found = findBlockById(selectedBlockId);
+  if(!found) return;
+  const {siblings, index} = found;
+  if(index > 0){
+    [siblings[index], siblings[index-1]] = [siblings[index-1], siblings[index]];
     render();
     setTimeout(() => highlightBlock(selectedBlockId), 100);
   }
@@ -2011,15 +2014,11 @@ function moveBlockUp(){
 // Función para mover bloque hacia abajo
 function moveBlockDown(){
   if(!selectedBlockId) return;
-  const block = findBlockById(selectedBlockId);
-  if(!block || !block.parent) return;
-  
-  const siblings = block.parent.blocks || block.parent.thenBlocks || block.parent.elseBlocks || block.parent.bodyBlocks;
-  if(!siblings) return;
-  
-  const idx = siblings.indexOf(block.block);
-  if(idx < siblings.length - 1){
-    [siblings[idx], siblings[idx+1]] = [siblings[idx+1], siblings[idx]];
+  const found = findBlockById(selectedBlockId);
+  if(!found) return;
+  const {siblings, index} = found;
+  if(index < siblings.length - 1){
+    [siblings[index], siblings[index+1]] = [siblings[index+1], siblings[index]];
     render();
     setTimeout(() => highlightBlock(selectedBlockId), 100);
   }
@@ -2029,7 +2028,7 @@ function moveBlockDown(){
 function deleteSelectedBlock(){
   if(!selectedBlockId) return;
   if(confirm('¿Eliminar este bloque?')){
-    delBlock(selectedBlockId);
+    deleteBlock(selectedBlockId);
     selectedBlockId = null;
   }
 }
@@ -2046,65 +2045,48 @@ function highlightBlock(bid){
 
 // Listener de teclado global
 document.addEventListener('keydown', (e) => {
-  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  
-  const ctrl = e.ctrlKey || e.metaKey;
-  const alt = e.altKey;
-  const shift = e.shiftKey;
   const key = e.key.toLowerCase();
-  
-  // BLOQUES BÁSICOS (Ctrl + Alt + Tecla)
-  if(ctrl && alt && !shift && key === 'i'){ 
-    e.preventDefault(); 
-    insertBlockViaShortcut('INSTR'); 
-    return; 
-  }
-  if(ctrl && alt && !shift && key === 'a'){ e.preventDefault(); insertBlockViaShortcut('ASIG'); return; }
-  if(ctrl && alt && !shift && key === 'e'){ e.preventDefault(); insertBlockViaShortcut('E'); return; }
-  if(ctrl && alt && !shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('S'); return; }
-  if(ctrl && alt && !shift && key === 'c'){ e.preventDefault(); insertBlockViaShortcut('COMMENT'); return; }
-  
-  // ESTRUCTURAS DE CONTROL (Ctrl + Alt + Shift + Tecla)
-  if(ctrl && alt && shift && key === 'i'){ e.preventDefault(); insertBlockViaShortcut('IF'); return; }
-  if(ctrl && alt && shift && key === 's'){ e.preventDefault(); insertBlockViaShortcut('SWITCH'); return; }
-  if(ctrl && alt && shift && key === 'w'){ e.preventDefault(); insertBlockViaShortcut('WHILE'); return; }
-  if(ctrl && alt && shift && key === 'd'){ e.preventDefault(); insertBlockViaShortcut('DOWHILE'); return; }
-  if(ctrl && alt && shift && key === 'f'){ e.preventDefault(); insertBlockViaShortcut('FOR'); return; }
-  
-  // ACCIONES (Ctrl + Alt + Tecla)
-  if(ctrl && alt && !shift && key === 'n'){ e.preventDefault(); showAddMethod(); return; }
-  if(ctrl && alt && !shift && key === 'g'){ e.preventDefault(); saveProject(); return; }
-  if(ctrl && alt && !shift && key === 'v'){ e.preventDefault(); validateDiagram(); return; }
-  
-  // MOVIMIENTO (solo Ctrl, no chocan)
-  if(ctrl && !alt && !shift && key === 'arrowup'){ e.preventDefault(); moveBlockUp(); return; }
-  if(ctrl && !alt && !shift && key === 'arrowdown'){ e.preventDefault(); moveBlockDown(); return; }
-  
-  // ELIMINAR Y ESCAPE (sin modificadores)
-  if(key === 'delete' && selectedBlockId){ e.preventDefault(); deleteSelectedBlock(); return; }
+
+  // Escape: limpia zona activa, modo y selección — funciona incluso con foco en input
   if(key === 'escape'){
     e.preventDefault();
-    document.querySelectorAll('.iz.active').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.block-selected').forEach(el => el.classList.remove('block-selected'));
+    if(document.activeElement && document.activeElement.tagName === 'INPUT'){
+      document.activeElement.blur();
+    }
+    activeZone = null;
+    mode = 'insert';
+    pendingBlockId = null;
     selectedBlockId = null;
-    return;
-  }
-  
-  // NAVEGACIÓN ENTRE MÉTODOS (Ctrl + Alt + Flechas)
-  if(ctrl && alt && !shift && key === 'arrowright'){
-    e.preventDefault();
-    const currentIdx = methods.findIndex(m => m.id === activeMethodId);
-    const nextIdx = (currentIdx + 1) % methods.length;
-    activeMethodId = methods[nextIdx].id;
     render();
     return;
   }
-  
+
+  // El resto no aplica si el foco está en un campo de texto
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  const ctrl = e.ctrlKey || e.metaKey;
+  const alt = e.altKey;
+  const shift = e.shiftKey;
+
+  // Mover bloque seleccionado (Ctrl + Flechas)
+  if(ctrl && !alt && !shift && key === 'arrowup'){ e.preventDefault(); moveBlockUp(); return; }
+  if(ctrl && !alt && !shift && key === 'arrowdown'){ e.preventDefault(); moveBlockDown(); return; }
+
+  // Eliminar bloque seleccionado
+  if(key === 'delete' && selectedBlockId){ e.preventDefault(); deleteSelectedBlock(); return; }
+
+  // Navegar entre métodos (Ctrl + Alt + Flechas) — flechas no son interceptadas por el OS
+  if(ctrl && alt && !shift && key === 'arrowright'){
+    e.preventDefault();
+    const currentIdx = methods.findIndex(m => m.id === activeMethodId);
+    activeMethodId = methods[(currentIdx + 1) % methods.length].id;
+    render();
+    return;
+  }
   if(ctrl && alt && !shift && key === 'arrowleft'){
     e.preventDefault();
     const currentIdx = methods.findIndex(m => m.id === activeMethodId);
-    const prevIdx = (currentIdx - 1 + methods.length) % methods.length;
-    activeMethodId = methods[prevIdx].id;
+    activeMethodId = methods[(currentIdx - 1 + methods.length) % methods.length].id;
     render();
     return;
   }
