@@ -148,6 +148,9 @@ h1{font-size:13px}
 .method-edit-btns button:hover{background:rgba(255,255,255,0.25) !important;opacity:1 !important}
 .decl-section{background:var(--bg);border-bottom:2px solid var(--blue);padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .decl-row{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:0.5px solid var(--border);border-radius:4px;background:var(--bg2)}
+.decl-tag{font-size:11px;color:var(--text);font-family:monospace;cursor:pointer;padding:4px 8px;border-radius:3px;transition:background 0.15s;white-space:nowrap}
+.decl-tag:hover{background:rgba(255,255,255,0.05)}
+.decl-input{font-size:11px;color:var(--text);font-family:monospace;border:1px solid var(--blue);outline:none}
 .dbadge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;min-width:38px;text-align:center;letter-spacing:0.3px}
 .badge-var{background:#E6F1FB;color:#0C447C}
 .badge-const{background:#EAF3DE;color:#27500A}
@@ -524,10 +527,22 @@ function showAddMethod(){
 }
 
 function deleteMethod(id){
-  if(methods.length===1){alert('Debe haber al menos un método.');return;}
-  methods=methods.filter(m=>m.id!==id);
-  if(activeMethodId===id) activeMethodId=methods[0].id;
-  cancelMode();render();
+  if(methods.length === 1){
+    const confirm = window.confirm('¿Eliminar el último método y empezar de cero?');
+    if(!confirm) return;
+    
+    methods = [];
+    activeMethodId = null;
+    cancelMode();
+    triggerSave();
+    showWelcome();
+    return;
+  }
+  
+  methods = methods.filter(m => m.id !== id);
+  if(activeMethodId === id) activeMethodId = methods[0].id;
+  cancelMode();
+  render();
   triggerSave();
 }
 function activateMethod(id){activeMethodId=id;cancelMode();render();}
@@ -571,6 +586,29 @@ function addDecl(type){
 }
 function removeDecl(id){getActive().decls=getActive().decls.filter(d=>d.id!==id);render();}
 function updateDecl(id,val){let d=getActive().decls.find(x=>x.id===id);if(d)d.label=val;if(currentView==='code')renderCodeView();}
+
+function editDecl(id){
+  const tag = document.getElementById('decl-tag-' + id);
+  const input = document.getElementById('decl-input-' + id);
+  if(tag && input){
+    tag.style.display = 'none';
+    input.style.display = 'inline-block';
+    input.focus();
+    input.select();
+  }
+}
+
+function saveDecl(id){
+  const tag = document.getElementById('decl-tag-' + id);
+  const input = document.getElementById('decl-input-' + id);
+  if(tag && input){
+    updateDecl(id, input.value);
+    tag.textContent = input.value;
+    tag.style.display = 'inline-block';
+    input.style.display = 'none';
+    triggerSave();
+  }
+}
 
 function defBlock(type){
   let b={id:mid(),type};
@@ -767,7 +805,17 @@ function renderDiagram(){
     document.getElementById('diagramArea').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:14px">Método no encontrado</div>';
     return;
   }
-  let decls=m.decls.length>0?m.decls.map(d=>`<div class="decl-row"><span class="dbadge badge-${d.type.toLowerCase()}">${d.type}</span><input value="${esc(d.label)}" onchange="updateDecl(${d.id},this.value)" style="border:none;background:transparent;font-size:11px;color:var(--text);font-family:monospace;width:auto;min-width:120px"/><button class="del-d" onclick="removeDecl(${d.id})">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 9px;font-style:italic">sin declaraciones — usá los botones para agregar</div>';
+  let decls=m.decls.length>0?m.decls.map(d=>{
+    return `<div class="decl-row">
+      <span class="dbadge badge-${d.type.toLowerCase()}">${d.type}</span>
+      <span class="decl-tag" id="decl-tag-${d.id}" onclick="editDecl(${d.id})">${esc(d.label)}</span>
+      <input class="decl-input" id="decl-input-${d.id}" value="${esc(d.label)}" 
+        onblur="saveDecl(${d.id})" 
+        onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=document.getElementById('decl-tag-${d.id}').textContent;this.blur()}" 
+        style="display:none;border:none;background:rgba(255,255,255,0.1);font-size:11px;color:var(--text);font-family:monospace;padding:4px 8px;border-radius:3px;min-width:100px"/>
+      <button class="del-d" onclick="removeDecl(${d.id})">✕</button>
+    </div>`;
+  }).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 9px;font-style:italic">sin declaraciones — usá los botones para agregar</div>';
   let rootZone = presentationMode ? '' : zoneBar({type:'root',blockId:null,caseIdx:null},'zona principal');
   let blocks=m.blocks.length===0?`<div class="empty-diag">Activá una zona y elegí un bloque del panel derecho</div>${rootZone}`:rBlocks(m.blocks,'root',null,null);
   
