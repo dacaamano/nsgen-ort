@@ -26,7 +26,7 @@
 
 <!--
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                              NS+Gen v3.3                                   ║
+║                              NS+Gen v3.4                                   ║
 ║            Generador de Diagramas Nassi-Schneidermann Plus                ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
@@ -39,7 +39,7 @@ Licencia: MIT License (Código Abierto)
 Este software ha sido donado a ORT Argentina para uso libre en contextos
 educativos.
 
-Repositorio: (Pendiente publicación en GitHub)
+Repositorio: https://github.com/dacaamano/nsgen-ort
 Manual: Ver MANUAL_DE_USUARIO.txt
 Documentación: Ver README.md
 
@@ -82,7 +82,9 @@ body{background:var(--bg3);color:var(--text);font-size:13px;min-height:100vh;dis
 h1{font-size:13px}
 
 /* ── APP SHELL ── */
-.app{display:grid;grid-template-columns:200px 1fr 220px;grid-template-rows:auto 1fr;height:100vh;overflow:hidden}
+.app{display:grid;grid-template-columns:200px 1fr 220px;grid-template-rows:auto 1fr;height:100vh;overflow:hidden;transition:grid-template-columns 0.2s}
+.app.sidebar-hidden{grid-template-columns:0 1fr 220px}
+.app.sidebar-hidden .sidebar-left{display:none}
 .topbar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--blue);border-bottom:1px solid #0f2550}
 .logo{color:#fff;font-size:14px;font-weight:700;letter-spacing:0.5px;margin-right:4px}
 .logo span{color:#7eb8ff;font-weight:400}
@@ -156,6 +158,21 @@ h1{font-size:13px}
 .badge-const{background:#EAF3DE;color:#27500A}
 .badge-param{background:#FAEEDA;color:#633806}
 .decl-row input{border:none;background:transparent;font-size:11px;color:var(--text);padding:0;font-family:monospace;width:auto;min-width:120px;max-width:400px}
+.decl-sel{font-size:11px;font-family:monospace;color:var(--text);background:var(--bg2);border:0.5px solid var(--border);border-radius:3px;padding:2px 4px;cursor:pointer;max-width:90px}
+.decl-sel:focus{outline:1px solid var(--blue)}
+.decl-name-input{font-size:11px;font-family:monospace;color:var(--blue);background:transparent;border:none;border-bottom:1px dashed var(--border);padding:1px 0;outline:none;white-space:nowrap;min-width:8px;cursor:text;display:inline-block}
+.decl-name-input:focus{border-bottom-color:var(--blue)}
+.decl-val-input{font-size:11px;font-family:monospace;color:var(--amber);background:transparent;border:none;border-bottom:1px dashed var(--border);padding:1px 0;outline:none;white-space:nowrap;min-width:8px;cursor:text;display:inline-block}
+.decl-val-input:focus{border-bottom-color:var(--amber)}
+.decl-placeholder{color:var(--text3);font-style:italic}
+.decl-eq{font-size:11px;color:var(--text3);padding:0 3px;font-family:monospace}
+/* Estados de validación en tiempo real */
+.decl-row.decl-warn{background:#fff8e6;border-color:#e6a817}
+.decl-row.decl-warn .decl-name-input{color:#854F0B}
+.decl-row.decl-error{background:#fff0f0;border-color:#c0392b}
+.decl-row.decl-error .decl-name-input{color:#c0392b}
+.decl-warn-dot{width:7px;height:7px;border-radius:50%;background:#e6a817;flex-shrink:0;title:'Declarada pero no usada'}
+.decl-error-dot{width:7px;height:7px;border-radius:50%;background:#c0392b;flex-shrink:0}
 .del-d{font-size:10px;padding:1px 5px;border:0.5px solid var(--border);border-radius:3px;background:transparent;cursor:pointer;color:var(--red);opacity:0.6}
 .del-d:hover{opacity:1}
 .decl-add{display:inline-flex;gap:4px}
@@ -288,6 +305,7 @@ body.hide-comments .b-com{display:none !important}
 <div class="app">
 
 <div class="topbar">
+  <button id="btn-sidebar-toggle" onclick="toggleSidebar()" title="Mostrar/ocultar panel de métodos" style="font-size:14px;padding:3px 8px;min-width:28px">☰</button>
   <span class="logo">NS<span>+</span>Gen</span>
   <button onclick="clearMethod()">Limpiar método</button>
   <button onclick="saveProject()">💾 Guardar</button>
@@ -415,7 +433,7 @@ body.hide-comments .b-com{display:none !important}
 </div>
 
 <div class="app-footer">
-  <span>NS+Gen v3.3 — Generador de Diagramas Nassi-Schneidermann</span>
+  <span>NS+Gen v3.4 — Generador de Diagramas Nassi-Schneidermann</span>
   <span>·</span>
   <span>Creado por Daniel Antonio Caamaño</span>
   <span>·</span>
@@ -580,34 +598,88 @@ function editMethodReturn(){
   }
 }
 
+// Tipos disponibles para el selector, con su equivalente en cada lenguaje
+const DECL_TYPES = [
+  { id:'int',     java:'int',     py:'int',   cpp:'int',      cs:'int',    js:'number',  label:'int'     },
+  { id:'double',  java:'double',  py:'float', cpp:'double',   cs:'double', js:'number',  label:'double'  },
+  { id:'float',   java:'float',   py:'float', cpp:'float',    cs:'float',  js:'number',  label:'float'   },
+  { id:'long',    java:'long',    py:'int',   cpp:'long',     cs:'long',   js:'number',  label:'long'    },
+  { id:'short',   java:'short',   py:'int',   cpp:'short',    cs:'short',  js:'number',  label:'short'   },
+  { id:'byte',    java:'byte',    py:'int',   cpp:'char',     cs:'byte',   js:'number',  label:'byte'    },
+  { id:'char',    java:'char',    py:'str',   cpp:'char',     cs:'char',   js:'string',  label:'char'    },
+  { id:'boolean', java:'boolean', py:'bool',  cpp:'bool',     cs:'bool',   js:'boolean', label:'boolean' },
+  { id:'String',  java:'String',  py:'str',   cpp:'string',   cs:'string', js:'string',  label:'String'  },
+  { id:'int[]',   java:'int[]',   py:'list',  cpp:'vector<int>',    cs:'int[]',   js:'Array', label:'int[]'   },
+  { id:'double[]',java:'double[]',py:'list',  cpp:'vector<double>', cs:'double[]',js:'Array', label:'double[]'},
+  { id:'String[]',java:'String[]',py:'list',  cpp:'vector<string>', cs:'string[]',js:'Array', label:'String[]'},
+  { id:'float[]', java:'float[]', py:'list',  cpp:'vector<float>',  cs:'float[]', js:'Array', label:'float[]' },
+];
+
+function getDeclType(typeId){ return DECL_TYPES.find(t=>t.id===typeId) || DECL_TYPES[0]; }
+
+// Parsea un label legacy (ej: "int nombre" o "final int NOMBRE = 4") al nuevo formato estructurado
+function parseLegacyLabel(label, declType){
+  const clean = label.replace(/^\s*final\s+/i,'').trim();
+  const parts = clean.split(/\s+/);
+  if(parts.length >= 2){
+    const typeId = DECL_TYPES.find(t=>t.java===parts[0] || t.id===parts[0]) ? parts[0] : 'int';
+    const rest = parts.slice(1).join(' ');
+    const eqIdx = rest.indexOf('=');
+    const name = (eqIdx >= 0 ? rest.slice(0,eqIdx) : rest).trim().replace(/;$/,'');
+    const value = eqIdx >= 0 ? rest.slice(eqIdx+1).trim().replace(/;$/,'') : '';
+    return { typeId, name, value };
+  }
+  return { typeId:'int', name:clean.replace(/;$/,''), value:'' };
+}
+
+// Construye el label canónico a partir de partes estructuradas (para compatibilidad con generadores)
+function buildLabel(typeId, name, value, declType){
+  const t = getDeclType(typeId);
+  if(declType === 'CONST'){
+    return value ? `final ${t.java} ${name} = ${value}` : `final ${t.java} ${name}`;
+  }
+  return value ? `${t.java} ${name} = ${value}` : `${t.java} ${name}`;
+}
+
 function addDecl(type){
-  let m=getActive(),label=type==='VAR'?'int nombre':type==='CONST'?'final int NOMBRE = valor':'int parametro';
-  m.decls.push({id:mid(),type,label});render();triggerSave();
-}
-function removeDecl(id){getActive().decls=getActive().decls.filter(d=>d.id!==id);render();}
-function updateDecl(id,val){let d=getActive().decls.find(x=>x.id===id);if(d)d.label=val;if(currentView==='code')renderCodeView();}
-
-function editDecl(id){
-  const tag = document.getElementById('decl-tag-' + id);
-  const input = document.getElementById('decl-input-' + id);
-  if(tag && input){
-    tag.style.display = 'none';
-    input.style.display = 'inline-block';
-    input.focus();
-    input.select();
-  }
+  let m=getActive();
+  const defaultName = type==='CONST' ? 'NOMBRE' : type==='PARAM' ? 'parametro' : 'nombre';
+  const defaultVal  = type==='CONST' ? '0' : '';
+  // Guardamos en formato estructurado: "typeId|name|value"
+  const label = `int|${defaultName}|${defaultVal}`;
+  m.decls.push({id:mid(), type, label, _structured:true});
+  render(); triggerSave();
 }
 
-function saveDecl(id){
-  const tag = document.getElementById('decl-tag-' + id);
-  const input = document.getElementById('decl-input-' + id);
-  if(tag && input){
-    updateDecl(id, input.value);
-    tag.textContent = input.value;
-    tag.style.display = 'inline-block';
-    input.style.display = 'none';
-    triggerSave();
+function removeDecl(id){getActive().decls=getActive().decls.filter(d=>d.id!==id);render();triggerSave();}
+
+function updateDeclField(id, field, val){
+  let d=getActive().decls.find(x=>x.id===id);
+  if(!d) return;
+  let {typeId,name,value} = getDeclParts(d);
+  if(field==='typeId') typeId=val;
+  if(field==='name')   name=val.trim().replace(/\s+/g,'');
+  if(field==='value')  value=val.trim();
+  d.label = `${typeId}|${name}|${value}`;
+  d._structured = true;
+  render(); // re-render completo para que la validación en tiempo real se actualice
+  triggerSave();
+}
+
+// Obtiene las partes estructuradas de una declaración (nueva o legacy)
+function getDeclParts(d){
+  if(d._structured || (d.label && d.label.match(/^[a-zA-Z\[\]]+\|/))){
+    const parts = d.label.split('|');
+    return { typeId: parts[0]||'int', name: parts[1]||'nombre', value: parts[2]||'' };
   }
+  // Legacy: parsear el texto libre
+  return parseLegacyLabel(d.label, d.type);
+}
+
+// Genera el label Java canónico desde una declaración (usado por los generadores)
+function getDeclJavaLabel(d){
+  const {typeId,name,value} = getDeclParts(d);
+  return buildLabel(typeId, name, value, d.type);
 }
 
 function defBlock(type){
@@ -805,14 +877,42 @@ function renderDiagram(){
     document.getElementById('diagramArea').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:14px">Método no encontrado</div>';
     return;
   }
+  const varAnalysis = analyzeVars(m);
   let decls=m.decls.length>0?m.decls.map(d=>{
-    return `<div class="decl-row">
+    const {typeId,name,value} = getDeclParts(d);
+    const typeOptions = DECL_TYPES.map(t=>
+      `<option value="${t.id}" ${t.id===typeId?'selected':''}>${t.label}</option>`
+    ).join('');
+    const showValue = d.type==='CONST';
+    // Estado de validación en tiempo real
+    let warnClass='', warnDot='';
+    if(varAnalysis.unused.has(name)){
+      warnClass='decl-warn';
+      warnDot=`<span class="decl-warn-dot" title="Declarada pero nunca usada"></span>`;
+    } else if(varAnalysis.undeclared.has(name)){
+      warnClass='decl-error';
+      warnDot=`<span class="decl-error-dot" title="Usada pero podría estar mal escrita"></span>`;
+    }
+    return `<div class="decl-row ${warnClass}">
+      ${warnDot}
       <span class="dbadge badge-${d.type.toLowerCase()}">${d.type}</span>
-      <span class="decl-tag" id="decl-tag-${d.id}" onclick="editDecl(${d.id})">${esc(d.label)}</span>
-      <input class="decl-input" id="decl-input-${d.id}" value="${esc(d.label)}" 
-        onblur="saveDecl(${d.id})" 
-        onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=document.getElementById('decl-tag-${d.id}').textContent;this.blur()}" 
-        style="display:none;border:none;background:rgba(255,255,255,0.1);font-size:11px;color:var(--text);font-family:monospace;padding:4px 8px;border-radius:3px;min-width:100px"/>
+      <select class="decl-sel" onchange="updateDeclField(${d.id},'typeId',this.value)" onclick="event.stopPropagation()">${typeOptions}</select>
+      <span class="decl-name-input${!name?' decl-placeholder':''}"
+        contenteditable="true"
+        data-id="${d.id}" data-field="name"
+        onblur="saveDeclSpan(this,${d.id},'name')"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}if(event.key==='Escape'){this.textContent=this.dataset.orig;this.blur()}"
+        onfocus="this.dataset.orig=this.textContent"
+        onclick="event.stopPropagation()"
+        >${esc(name)||'nombre'}</span>
+      ${showValue ? `<span class="decl-eq">=</span><span class="decl-val-input${!value?' decl-placeholder':''}"
+        contenteditable="true"
+        data-id="${d.id}" data-field="value"
+        onblur="saveDeclSpan(this,${d.id},'value')"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}if(event.key==='Escape'){this.textContent=this.dataset.orig;this.blur()}"
+        onfocus="this.dataset.orig=this.textContent"
+        onclick="event.stopPropagation()"
+        >${esc(value)||'0'}</span>` : ''}
       <button class="del-d" onclick="removeDecl(${d.id})">✕</button>
     </div>`;
   }).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 9px;font-style:italic">sin declaraciones — usá los botones para agregar</div>';
@@ -833,13 +933,16 @@ function renderDiagram(){
 function parseForHeader(h){
   let parts=h.split(',').map(s=>s.trim());
   if(parts.length===3){
-    let init=parts[0].replace('<-','=').replace('←','=').trim();
+    let initRaw=parts[0].replace('<-','=').replace('←','=').trim();
     let limitRaw=parts[1].trim();
     let step=parts[2].trim();
-    let varName=init.split(/[=\s]/)[0].trim().split(/\s+/).pop();
-    return {init,limit:`${varName} <= ${limitRaw}`,update:`${varName} += ${step}`,varName};
+    // Extraer nombre de variable — puede venir como "i = 1" o "i <- 1"
+    let varName=initRaw.split(/[=\s]/)[0].trim();
+    // Agregar 'int' si el init no tiene tipo declarado (caso más común en NS+)
+    let init = /^[a-zA-Z_][a-zA-Z0-9_]*\s*=/.test(initRaw) ? `int ${initRaw}` : initRaw;
+    return {init, limit:`${varName} <= ${limitRaw}`, update:`${varName} += ${step}`, varName};
   }
-  return {init:h,limit:'',update:'',varName:'i'};
+  return {init:h, limit:'', update:'', varName:'i'};
 }
 
 function parseForeachHeader(h){
@@ -866,12 +969,12 @@ function genNS(m){
     if(b.type==='FOREACH'){return `${ind}FOREACH ${b.header}\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}ENDFOREACH\n`;}
     return '';
   }
-  let d=m.decls.map(d=>(d.type==='VAR'?'VAR ':d.type==='CONST'?'CONST ':'PARAM ')+d.label+'\n').join('');
+  let d=m.decls.map(d=>(d.type==='VAR'?'VAR ':d.type==='CONST'?'CONST ':'PARAM ')+getDeclJavaLabel(d)+'\n').join('');
   return `${m.name}\n  ${m.sig}\n\n${d}${m.blocks.map(b=>bc(b,'  ')).join('')}`;
 }
 
 function genJava(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>getDeclJavaLabel(d)).join(', ');
   let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
   
   // Check if there are any INPUT blocks in the entire tree
@@ -890,17 +993,17 @@ function genJava(m){
   // Build a map of variable types for INPUT parsing
   let varTypes = {};
   m.decls.filter(d=>d.type==='VAR' || d.type==='PARAM').forEach(d=>{
-    let parts = d.label.trim().split(/\s+/);
-    if(parts.length >= 2){
-      let type = parts[0];
-      let varName = parts[1].replace(/[\[\];=].*/,''); // Remove [], ; and everything after =
-      varTypes[varName] = type;
-    }
+    const {typeId,name} = getDeclParts(d);
+    const t = getDeclType(typeId);
+    varTypes[name] = t.java;
   });
   
   // CONST → static final class attributes
   let constAttrs=m.decls.filter(d=>d.type==='CONST')
-    .map(d=>`    private static final ${d.label};`).join('\n');
+    .map(d=>{
+      const label = getDeclJavaLabel(d).replace(/^\s*final\s+/i,'');
+      return `    private static final ${label};`;
+    }).join('\n');
   
   // Add Scanner as static attribute if needed
   if(needsScanner){
@@ -911,7 +1014,7 @@ function genJava(m){
   
   // VAR → local variables inside method only
   let localVars=m.decls.filter(d=>d.type==='VAR')
-    .map(d=>`        ${d.label};`).join('\n');
+    .map(d=>`        ${getDeclJavaLabel(d)};`).join('\n');
     
   function bc(b,ind){
     if(b.type==='E'){
@@ -965,10 +1068,11 @@ function genJava(m){
 }
 
 function genPython(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{let parts=d.label.trim().split(/\s+/);return parts.length>=2?parts[1]:parts[0];}).join(', ');
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
+    const {name}=getDeclParts(d); return name;
+  }).join(', ');
   let methodName=m.sig.replace(/\(.*\)/,'').trim();
-  function pyType(jt){const map={int:'int',float:'float',double:'float',boolean:'bool',String:'str',long:'int',char:'str'};return map[jt]||jt;}
-  function parseVar(decl){let parts=decl.trim().split(/\s+/);if(parts.length>=2){let t=pyType(parts[0]),n=parts[1].replace(/;$/,'');let val=parts.includes('=')?parts.slice(parts.indexOf('=')+1).join(' ').replace(/;$/,''):'None';return{name:n,type:t,val};}return{name:decl,type:'',val:'None'};}
+  function pyType(typeId){ const t=getDeclType(typeId); return t.py; }
   function bc(b,ind){
     if(b.type==='E'){let v=b.label.trim().split(/\s+/).pop();return `${ind}${v} = input()  # INPUT ${b.label}\n`;}
     if(b.type==='S') return `${ind}print(${b.label})\n`;
@@ -987,14 +1091,13 @@ function genPython(m){
   }
   // CONST → module-level constants only
   let consts=m.decls.filter(d=>d.type==='CONST').map(d=>{
-    let label=d.label.replace(/^final\s+/i,'');
-    let v=parseVar(label);
-    return `${v.name}: ${v.type} = ${v.val}`;
+    const {typeId,name,value}=getDeclParts(d);
+    return `${name}: ${pyType(typeId)} = ${value||'None'}`;
   }).join('\n');
   // VAR → typed local variables inside method only
   let localVars=m.decls.filter(d=>d.type==='VAR').map(d=>{
-    let v=parseVar(d.label);
-    return `        ${v.name}: ${v.type} = ${v.val}`;
+    const {typeId,name,value}=getDeclParts(d);
+    return `        ${name}: ${pyType(typeId)} = ${value||'None'}`;
   }).join('\n');
   let body=m.blocks.map(b=>bc(b,'        ')).join('');
   let retHint=m.returnType==='void'?'None':pyType(m.returnType);
@@ -1002,7 +1105,10 @@ function genPython(m){
 }
 
 function genCpp(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
+    const {typeId,name}=getDeclParts(d);
+    return `${getDeclType(typeId).cpp} ${name}`;
+  }).join(', ');
   let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
   
   // Check if there are any INPUT blocks
@@ -1020,11 +1126,19 @@ function genCpp(m){
   
   // CONST → static const class attributes
   let constAttrs=m.decls.filter(d=>d.type==='CONST')
-    .map(d=>`    static const ${d.label}`).join('\n');
+    .map(d=>{
+      const {typeId,name,value}=getDeclParts(d);
+      const t=getDeclType(typeId);
+      return `    static const ${t.cpp} ${name}${value?' = '+value:''};`;
+    }).join('\n');
   
   // VAR → local variables inside method only
   let localVars=m.decls.filter(d=>d.type==='VAR')
-    .map(d=>`        ${d.label}`).join('\n');
+    .map(d=>{
+      const {typeId,name,value}=getDeclParts(d);
+      const t=getDeclType(typeId);
+      return `        ${t.cpp} ${name}${value?' = '+value:''};`;
+    }).join('\n');
     
   function bc(b,ind){
     if(b.type==='E'){
@@ -1054,7 +1168,11 @@ function genCpp(m){
 }
 
 function genCSharp(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
+    const {typeId,name}=getDeclParts(d);
+    const t=getDeclType(typeId);
+    return `${t.cs} ${name}`;
+  }).join(', ');
   let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
   
   // Capitalize method name for C# convention
@@ -1062,27 +1180,23 @@ function genCSharp(m){
   methodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);
   sigBase = methodName + '(' + sigBase.split('(')[1];
   
+  function csharpType(typeId){
+    return getDeclType(typeId).cs;
+  }
+
   // CONST → static readonly class attributes
   let constAttrs=m.decls.filter(d=>d.type==='CONST')
-    .map(d=>`    private static readonly ${d.label}`).join('\n');
+    .map(d=>{
+      const {typeId,name,value}=getDeclParts(d);
+      return `    private static readonly ${csharpType(typeId)} ${name}${value?' = '+value:''};`;
+    }).join('\n');
   
   // VAR → local variables inside method only
   let localVars=m.decls.filter(d=>d.type==='VAR')
-    .map(d=>`        ${d.label}`).join('\n');
-    
-  function csharpType(javaType){
-    const map = {
-      'void': 'void',
-      'int': 'int',
-      'float': 'float',
-      'double': 'double',
-      'boolean': 'bool',
-      'String': 'string',
-      'long': 'long',
-      'char': 'char'
-    };
-    return map[javaType] || javaType;
-  }
+    .map(d=>{
+      const {typeId,name,value}=getDeclParts(d);
+      return `        ${csharpType(typeId)} ${name}${value?' = '+value:''};`;
+    }).join('\n');
   
   function bc(b,ind){
     if(b.type==='E'){
@@ -1113,27 +1227,21 @@ function genCSharp(m){
 
 function genJavaScript(m){
   let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
-    let parts=d.label.trim().split(/\s+/);
-    return parts.length>=2?parts[1]:parts[0];
+    const {name}=getDeclParts(d); return name;
   }).join(', ');
   
   let methodName=m.sig.replace(/\(.*\)/,'').trim();
   
   // CONST → module-level constants
   let consts=m.decls.filter(d=>d.type==='CONST').map(d=>{
-    let label=d.label.replace(/^final\s+/i,'').trim();
-    let parts = label.split(/\s+/);
-    let varName = parts.length >= 2 ? parts[1] : parts[0];
-    let value = parts.includes('=') ? parts.slice(parts.indexOf('=')+1).join(' ') : 'null';
-    return `const ${varName} = ${value};`;
+    const {name,value}=getDeclParts(d);
+    return `const ${name} = ${value||'null'};`;
   }).join('\n');
   
   // VAR → let variables inside function
   let localVars=m.decls.filter(d=>d.type==='VAR').map(d=>{
-    let parts = d.label.trim().split(/\s+/);
-    let varName = parts.length >= 2 ? parts[1].replace(/;$/,'') : parts[0].replace(/;$/,'');
-    let value = parts.includes('=') ? parts.slice(parts.indexOf('=')+1).join(' ').replace(/;$/,'') : 'null';
-    return `    let ${varName} = ${value};`;
+    const {name,value}=getDeclParts(d);
+    return `    let ${name} = ${value||'null'};`;
   }).join('\n');
     
   function bc(b,ind){
@@ -1526,12 +1634,12 @@ function genASCII(m){
   }
 
   // Build full diagram
-  const params=m.decls.filter(d=>d.type==='PARAM').map(d=>d.label).join(', ');
+  const params=m.decls.filter(d=>d.type==='PARAM').map(d=>getDeclJavaLabel(d)).join(', ');
   const sig=`public ${m.returnType} ${m.sig.replace(/\(.*\)/,`(${params})`)}`;
   let w=calcW(m.blocks,MIN_W);
   // Factor in declarations and signature
   for(const d of m.decls){
-    const txt=(d.type==='CONST'?'final ':'')+''+d.label;
+    const txt=getDeclJavaLabel(d);
     w=Math.max(w,txt.length+4);
   }
   w=Math.max(w,sig.length+4);
@@ -1543,8 +1651,7 @@ function genASCII(m){
   if(m.decls.length>0){
     out.push(bc.ml+rep(bc.h,w)+bc.mr);
     for(const d of m.decls){
-      const txt=(d.type==='CONST'?'final ':'')+''+d.label;
-      out.push(row(txt,w,0,''));
+      out.push(row(getDeclJavaLabel(d),w,0,''));
     }
   }
   out.push(bc.ml+rep(bc.h,w)+bc.mr);
@@ -1593,6 +1700,67 @@ function validateMethod(m){
     }
   }
   checkBlocks(m.blocks, '');
+
+  // ── VALIDACIÓN 1: declaraciones con tipo placeholder ──────────────────────
+  // Detecta declaraciones legacy que no migraron al selector (tipo libre que no es Java válido)
+  const JAVA_TYPES = /^(int|double|float|long|short|byte|char|boolean|String|Integer|Double|Float|Long|Boolean|void)/i;
+  m.decls.forEach(d => {
+    const {typeId} = getDeclParts(d);
+    if(!JAVA_TYPES.test(typeId)){
+      errors.push(`Declaración con tipo inválido: "${d.label.trim()}" — ¿falta especificar el tipo de dato?`);
+    }
+  });
+
+  // ── VALIDACIÓN 2 y 3: variables declaradas vs. usadas ─────────────────────
+  const declaredNames = new Set();
+  m.decls.forEach(d => {
+    const {name} = getDeclParts(d);
+    if(name) declaredNames.add(name);
+  });
+
+  // Recolectamos todos los identificadores usados en bloques (labels, condiciones, headers)
+  const usedNames = new Set();
+  function collectUsed(blocks){
+    for(const b of (blocks||[])){
+      const texts = [];
+      if(b.label) texts.push(b.label);
+      if(b.cond)  texts.push(b.cond);
+      if(b.expr)  texts.push(b.expr);
+      if(b.header) texts.push(b.header);
+      // extractIdentifiers ignora contenido entre comillas dobles — evita falsos positivos en S:
+      for(const t of texts) extractIdentifiers(t).forEach(tok => usedNames.add(tok));
+      collectUsed(b.thenBlocks);
+      collectUsed(b.elseBlocks);
+      collectUsed(b.bodyBlocks);
+      if(b.cases) b.cases.forEach(c => collectUsed(c.blocks));
+    }
+  }
+  collectUsed(m.blocks);
+
+  // Palabras reservadas y tipos que no son variables de usuario
+  const RESERVED = new Set([
+    'int','double','float','long','short','byte','char','boolean','void',
+    'String','Integer','Double','Float','Long','Boolean','true','false','null',
+    'if','else','while','for','do','switch','case','return','new','this','super',
+    'class','public','private','static','final','import','System','out','println',
+    'Scanner','nextLine','parseInt','parseDouble','parseFloat','parseLong','parseBoolean',
+    'equals','length','toString','input','close','i','j','k' // variables de control de FOR comunes
+  ]);
+
+  // Validación 2: declaradas pero nunca usadas
+  declaredNames.forEach(name => {
+    if(!usedNames.has(name) && !RESERVED.has(name)){
+      errors.push(`Variable declarada pero nunca usada: "${name}"`);
+    }
+  });
+
+  // Validación 3: usadas pero no declaradas
+  usedNames.forEach(name => {
+    if(!declaredNames.has(name) && !RESERVED.has(name) && name.length > 1){
+      errors.push(`Variable usada pero no declarada: "${name}"`);
+    }
+  });
+
   return errors;
 }
 
@@ -1735,6 +1903,92 @@ function toggleTheme(){
   localStorage.setItem('nsgen_theme', darkTheme ? 'dark' : 'light');
   const icon = document.getElementById('theme-icon');
   if(icon) icon.textContent = darkTheme ? '☀' : '🌙';
+}
+
+let sidebarVisible = true;
+function toggleSidebar(){
+  sidebarVisible = !sidebarVisible;
+  document.querySelector('.app').classList.toggle('sidebar-hidden', !sidebarVisible);
+  const btn = document.getElementById('btn-sidebar-toggle');
+  if(btn) btn.style.opacity = sidebarVisible ? '1' : '0.5';
+}
+
+// Mide el ancho exacto de un texto en píxeles usando canvas (fuente monospace 11px)
+// Guarda el contenido de un span contenteditable como campo de declaración
+function saveDeclSpan(el, id, field){
+  let val = el.textContent.trim();
+  if(!val){
+    el.textContent = field==='name' ? 'nombre' : '0';
+    el.classList.add('decl-placeholder');
+    val = '';
+  } else {
+    el.classList.remove('decl-placeholder');
+  }
+  updateDeclField(id, field, val);
+}
+
+function extractIdentifiers(text){
+  // Elimina strings entre comillas dobles antes de tokenizar
+  const stripped = text.replace(/"[^"]*"/g, ' ');
+  return stripped.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+}
+
+// Análisis en tiempo real de variables: devuelve {unused: Set, undeclared: Set}
+function analyzeVars(m){
+  const RESERVED = new Set([
+    'int','double','float','long','short','byte','char','boolean','void',
+    'String','Integer','Double','Float','Long','Boolean','true','false','null',
+    'if','else','while','for','do','switch','case','return','new','this','super',
+    'class','public','private','static','final','import','System','out','println',
+    'Scanner','nextLine','parseInt','parseDouble','parseFloat','parseLong','parseBoolean',
+    'equals','length','toString','input','close'
+    // Nota: i/j/k removidos de RESERVED — si el usuario los declara como VAR, deben participar del análisis
+  ]);
+  const declaredNames = new Set();
+  m.decls.forEach(d => { const {name}=getDeclParts(d); if(name) declaredNames.add(name); });
+
+  const usedNames = new Set();
+  function collect(blocks){
+    for(const b of (blocks||[])){
+      const texts=[];
+      if(b.label) texts.push(b.label);
+      if(b.cond)  texts.push(b.cond);
+      if(b.expr)  texts.push(b.expr);
+      if(b.header) texts.push(b.header);
+      for(const t of texts) extractIdentifiers(t).forEach(tok=>usedNames.add(tok));
+      collect(b.thenBlocks); collect(b.elseBlocks); collect(b.bodyBlocks);
+      if(b.cases) b.cases.forEach(c=>collect(c.blocks));
+    }
+  }
+  collect(m.blocks);
+
+  // Los iteradores de FOR (i, j, etc.) se consideran "usados" aunque no estén declarados
+  // porque en NS+ se declaran implícitamente en el header del FOR
+  const forIterators = new Set();
+  function collectForIterators(blocks){
+    for(const b of (blocks||[])){
+      if((b.type==='FOR'||b.type==='FOREACH') && b.header){
+        const p = parseForHeader(b.header);
+        if(p.varName) forIterators.add(p.varName);
+      }
+      collectForIterators(b.thenBlocks); collectForIterators(b.elseBlocks);
+      collectForIterators(b.bodyBlocks);
+      if(b.cases) b.cases.forEach(c=>collectForIterators(c.blocks));
+    }
+  }
+  collectForIterators(m.blocks);
+
+  const unused = new Set();
+  declaredNames.forEach(name => {
+    if(!usedNames.has(name) && !RESERVED.has(name) && !forIterators.has(name))
+      unused.add(name);
+  });
+  const undeclared = new Set();
+  usedNames.forEach(name => {
+    if(!declaredNames.has(name) && !RESERVED.has(name) && !forIterators.has(name) && name.length>1)
+      undeclared.add(name);
+  });
+  return {unused, undeclared};
 }
 
 function render(){
@@ -2050,7 +2304,7 @@ document.addEventListener('keydown', (e) => {
   // Escape: limpia zona activa, modo y selección — funciona incluso con foco en input
   if(key === 'escape'){
     e.preventDefault();
-    if(document.activeElement && document.activeElement.tagName === 'INPUT'){
+    if(document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.contentEditable === 'true')){
       document.activeElement.blur();
     }
     activeZone = null;
@@ -2061,8 +2315,8 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // El resto no aplica si el foco está en un campo de texto
-  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  // El resto no aplica si el foco está en un campo de texto o editable
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true') return;
 
   const ctrl = e.ctrlKey || e.metaKey;
   const alt = e.altKey;
