@@ -26,7 +26,7 @@
 
 <!--
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                              NS+Gen v3.4                                   ║
+║                              NS+Gen v4.0                                   ║
 ║            Generador de Diagramas Nassi-Schneidermann Plus                ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
@@ -84,7 +84,7 @@ h1{font-size:13px}
 /* ── APP SHELL ── */
 .app{display:grid;grid-template-columns:200px 1fr 220px;grid-template-rows:auto 1fr;height:100vh;overflow:hidden;transition:grid-template-columns 0.2s}
 .app.sidebar-hidden{grid-template-columns:0 1fr 220px}
-.app.sidebar-hidden .sidebar-left{display:none}
+.app.sidebar-hidden .sidebar-left{width:0;overflow:hidden;border:none;padding:0;min-width:0}
 .topbar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--blue);border-bottom:1px solid #0f2550}
 .logo{color:#fff;font-size:14px;font-weight:700;letter-spacing:0.5px;margin-right:4px}
 .logo span{color:#7eb8ff;font-weight:400}
@@ -144,7 +144,15 @@ h1{font-size:13px}
 .code-block{flex:1;overflow:auto;padding:14px 18px;font-family:'Consolas','Fira Code',monospace;font-size:12px;line-height:1.75;white-space:pre;color:#e6edf3}
 .code-block.ns .kw{color:var(--ns-green)}.code-block.java .kw{color:var(--java-blue)}.code-block.python .kw{color:var(--py-orange)}
 
-/* ── DIAGRAM ── */
+/* ── BÚSQUEDA ── */
+.ns-block.search-match{outline:3px solid #f0a500 !important;outline-offset:2px;box-shadow:0 0 0 1px #f0a500}
+.search-hl{background:#f0a500;color:#000;border-radius:2px;padding:0 2px;font-weight:700;font-size:13px}
+/* Resaltado en declaraciones */
+.decl-row.search-match{outline:2px solid #f0a500;outline-offset:1px;background:#fff8e6 !important}
+.decl-row.search-match .decl-name-input{font-weight:700;font-size:12px}
+
+/* ── NUMERACIÓN DE BLOQUES ── */
+.block-num{font-size:9px;color:var(--text3);font-family:monospace;min-width:18px;text-align:right;margin-right:4px;flex-shrink:0;user-select:none}
 .mhbox{border:2px solid var(--blue);border-radius:var(--radius) var(--radius) 0 0;overflow:hidden}
 .mhtitle{background:var(--blue);color:#fff;font-size:12px;font-weight:600;padding:5px 10px;font-family:monospace}
 .method-edit-btns button:hover{background:rgba(255,255,255,0.25) !important;opacity:1 !important}
@@ -314,7 +322,17 @@ body.hide-comments .b-com{display:none !important}
   <button onclick="showHistoryPanel()">📜 Historial</button>
   <button onclick="exportDiagram()">Exportar .txt</button>
   <button onclick="validateAll()" style="background:rgba(255,200,50,0.15);border-color:rgba(255,200,50,0.4)">✓ Validar</button>
+  <button onclick="exportPNG()" title="Exportar PNG — requiere modo Presentación activo">📷 PNG</button>
   <div class="topbar-sep"></div>
+  <div style="position:relative;display:flex;align-items:center">
+    <input id="search-input" type="text" placeholder="🔍 Buscar en diagrama..." 
+      style="font-size:11px;padding:4px 28px 4px 9px;border:0.5px solid rgba(255,255,255,0.25);border-radius:var(--radius);background:rgba(255,255,255,0.1);color:#fff;width:200px;outline:none"
+      oninput="setSearch(this.value)"
+      onkeydown="if(event.key==='Escape'){this.value='';setSearch('')}"
+      onclick="event.stopPropagation()"
+    />
+    <span id="search-count" style="position:absolute;right:7px;font-size:10px;color:rgba(255,255,255,0.6);pointer-events:none"></span>
+  </div>
   <button class="view-tab active" id="vt-v" onclick="setView('visual')">Diagrama</button>
   <button class="view-tab" id="vt-c" onclick="setView('code')">Código</button>
   <button class="view-tab" id="vt-m" onclick="setView('manual')">📖 Manual</button>
@@ -433,7 +451,7 @@ body.hide-comments .b-com{display:none !important}
 </div>
 
 <div class="app-footer">
-  <span>NS+Gen v3.4 — Generador de Diagramas Nassi-Schneidermann</span>
+  <span>NS+Gen v4.0 — Generador de Diagramas Nassi-Schneidermann</span>
   <span>·</span>
   <span>Creado por Daniel Antonio Caamaño</span>
   <span>·</span>
@@ -786,6 +804,7 @@ function moveBlock(id,dir){
 function updateField(id,field,val){
   let b=findBlock(getActive().blocks,id);if(b)b[field]=val;
   if(currentView==='code')renderCodeView();
+  triggerSave();
 }
 
 function addSwitchCase(id){
@@ -822,6 +841,8 @@ function rBlocks(arr,zt,bId,cIdx){
     return `<div class="empty-diag">— vacío —</div>${presentationMode?'':zoneBar(z,'aquí')}`;
   }
   let h='';
+  // Zona "+ antes" del primer bloque (afterIdx:-1 = insertar en posición 0)
+  if(!presentationMode) h+=zoneBar({type:zt,blockId:bId,caseIdx:cIdx,afterIdx:-1},'antes');
   for(let i=0;i<arr.length;i++){
     h+=rBlock(arr[i],zt,bId,cIdx,i);
     if(!presentationMode) h+=zoneBar({type:zt,blockId:bId,caseIdx:cIdx,afterIdx:i},'después');
@@ -831,16 +852,24 @@ function rBlocks(arr,zt,bId,cIdx){
 
 function rBlock(b,zt,bId,cIdx,i){
   let id=b.id,hl=mode!=='insert'&&pendingBlockId===id?'outline:2px solid #BA7517;':'';
-  if(b.type==='IF') return `<div class="ns-block"><div class="ns-if-hdr" onclick="event.stopPropagation()"><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="if-body"><div class="if-col"><div class="if-lbl">V</div><div>${rBlocks(b.thenBlocks,'if-then',id,null)}</div></div><div class="if-col"><div class="if-lbl">F</div><div>${rBlocks(b.elseBlocks,'if-else',id,null)}</div></div></div></div>`;
+  blockCounter++;
+  const num = presentationMode ? '' : `<span class="block-num">${blockCounter}</span>`;
+  
+  // Determinar si este bloque coincide con la búsqueda
+  const bText = [b.label,b.cond,b.expr,b.header].filter(Boolean).join(' ').toLowerCase();
+  const isMatch = searchQuery && bText.includes(searchQuery);
+  const matchCls = isMatch ? ' search-match' : '';
+
+  if(b.type==='IF') return `<div class="ns-block${matchCls}"><div class="ns-if-hdr" onclick="event.stopPropagation()">${num}<input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="if-body"><div class="if-col"><div class="if-lbl">V</div><div>${rBlocks(b.thenBlocks,'if-then',id,null)}</div></div><div class="if-col"><div class="if-lbl">F</div><div>${rBlocks(b.elseBlocks,'if-else',id,null)}</div></div></div></div>`;
   if(b.type==='SWITCH'){
     let cases=b.cases.map((c,ci)=>`<div class="sw-case"><div class="sw-clbl"><input value="${esc(c.label)}" onchange="let m=getActive();let bl=findBlock(m.blocks,${id});if(bl)bl.cases[${ci}].label=this.value;if(currentView==='code')renderCodeView();" onclick="event.stopPropagation()"/>${b.cases.length>2?`<button onclick="let m=getActive();let bl=findBlock(m.blocks,${id});if(bl&&bl.cases.length>2){bl.cases.splice(${ci},1);render();}event.stopPropagation()" style="font-size:9px;padding:0 3px;border:none;background:transparent;cursor:pointer;color:var(--red)">✕</button>`:''}</div><div>${rBlocks(c.blocks,'switch-case',id,ci)}</div></div>`).join('');
-    return `<div class="ns-block"><div class="sw-hdr" onclick="event.stopPropagation()"><span style="font-size:10px;font-weight:700;color:#854F0B;margin-right:6px">SWITCH</span><input value="${esc(b.expr)}" onchange="updateField(${id},'expr',this.value)" onclick="event.stopPropagation()" style="flex:1;background:transparent;border:none;font-size:12px;color:var(--text);font-family:monospace"/>${bacts(id,`<button class="ba" onclick="addSwitchCase(${id});event.stopPropagation()" style="color:#854F0B;border-color:#BA7517">+caso</button>`)}</div><div class="sw-body">${cases}</div></div>`;
+    return `<div class="ns-block${matchCls}"><div class="sw-hdr" onclick="event.stopPropagation()">${num}<span style="font-size:10px;font-weight:700;color:#854F0B;margin-right:6px">SWITCH</span><input value="${esc(b.expr)}" onchange="updateField(${id},'expr',this.value)" onclick="event.stopPropagation()" style="flex:1;background:transparent;border:none;font-size:12px;color:var(--text);font-family:monospace"/>${bacts(id,`<button class="ba" onclick="addSwitchCase(${id});event.stopPropagation()" style="color:#854F0B;border-color:#BA7517">+caso</button>`)}</div><div class="sw-body">${cases}</div></div>`;
   }
-  if(b.type==='WHILE') return `<div class="ns-block"><div class="lp-hdr" onclick="event.stopPropagation()"><span class="lp-tag">WHILE</span><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="lp-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div></div>`;
-  if(b.type==='DOWHILE') return `<div class="ns-block"><div class="dw-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div><div class="dw-ftr" onclick="event.stopPropagation()"><span class="dw-tag">DO WHILE</span><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div></div>`;
+  if(b.type==='WHILE') return `<div class="ns-block${matchCls}"><div class="lp-hdr" onclick="event.stopPropagation()">${num}<span class="lp-tag">WHILE</span><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="lp-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div></div>`;
+  if(b.type==='DOWHILE') return `<div class="ns-block${matchCls}"><div class="dw-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div><div class="dw-ftr" onclick="event.stopPropagation()">${num}<span class="dw-tag">DO WHILE</span><input value="${esc(b.cond)}" onchange="updateField(${id},'cond',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div></div>`;
   if(b.type==='FOR'||b.type==='FOREACH'){
     let tag=b.type==='FOR'?'FOR':'FOR-EACH';
-    return `<div class="ns-block"><div class="lp-hdr for-hdr" onclick="event.stopPropagation()"><span class="lp-tag for-tag">${tag}</span><input value="${esc(b.header)}" onchange="updateField(${id},'header',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="lp-body for-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div></div>`;
+    return `<div class="ns-block${matchCls}"><div class="lp-hdr for-hdr" onclick="event.stopPropagation()">${num}<span class="lp-tag for-tag">${tag}</span><input value="${esc(b.header)}" onchange="updateField(${id},'header',this.value)" onclick="event.stopPropagation()"/>${bacts(id)}</div><div class="lp-body for-body">${rBlocks(b.bodyBlocks,'loop',id,null)}</div></div>`;
   }
   let bg='',badge='';
   if(b.type==='E'){bg='io-e';badge='<span style="font-size:10px;font-weight:700;color:#993556;margin-right:5px;min-width:18px">E:</span>';}
@@ -850,7 +879,8 @@ function rBlock(b,zt,bId,cIdx,i){
   else if(b.type==='CALL'){bg='b-call';badge='<span style="font-size:10px;color:#72243E;margin-right:5px;min-width:18px">⇒</span>';}
   else if(b.type==='RETURN'){bg='b-ret';badge='<span style="font-size:10px;color:#633806;margin-right:5px;min-width:18px">↩</span>';}
   else if(b.type==='COMMENT'){bg='b-com';badge='<span style="font-size:10px;color:#888;margin-right:5px;min-width:18px">//</span>';}
-  return `<div class="ns-block ${bg}" style="${hl}"><div class="ns-bi">${badge}<input value="${esc(b.label||'')}" onchange="updateField(${id},'label',this.value)" onclick="event.stopPropagation()" style="flex:1;border:none;background:transparent;font-size:12px;color:var(--text);padding:0;cursor:text;font-family:monospace"/>${bacts(id)}</div></div>`;
+  const labelHtml = searchQuery ? hlSearch(b.label||'') : esc(b.label||'');
+  return `<div class="ns-block ${bg}${matchCls}" style="${hl}"><div class="ns-bi">${num}${badge}<input value="${esc(b.label||'')}" onchange="updateField(${id},'label',this.value)" onclick="event.stopPropagation()" style="flex:1;border:none;background:transparent;font-size:12px;color:var(--text);padding:0;cursor:text;font-family:monospace"/>${bacts(id)}</div></div>`;
 }
 
 function renderMethodList(){
@@ -878,6 +908,7 @@ function renderDiagram(){
     return;
   }
   const varAnalysis = analyzeVars(m);
+  blockCounter = 0; // reset numeración para este render
   let decls=m.decls.length>0?m.decls.map(d=>{
     const {typeId,name,value} = getDeclParts(d);
     const typeOptions = DECL_TYPES.map(t=>
@@ -893,6 +924,13 @@ function renderDiagram(){
       warnClass='decl-error';
       warnDot=`<span class="decl-error-dot" title="Usada pero podría estar mal escrita"></span>`;
     }
+    // Resaltado de búsqueda en declaraciones
+    const declMatchesSearch = searchQuery && (
+      name.toLowerCase().includes(searchQuery) ||
+      typeId.toLowerCase().includes(searchQuery) ||
+      value.toLowerCase().includes(searchQuery)
+    );
+    if(declMatchesSearch) warnClass = (warnClass+' search-match').trim();
     return `<div class="decl-row ${warnClass}">
       ${warnDot}
       <span class="dbadge badge-${d.type.toLowerCase()}">${d.type}</span>
@@ -1313,94 +1351,73 @@ function renderCodeView(){
 
 function renderManual(){
   const manualHTML = `
-    <h1>📖 Manual de Usuario - NS+Gen v3.2</h1>
-    
-    <p><strong>NS+Gen</strong> es un generador visual de diagramas Nassi-Schneidermann con exportación automática a múltiples lenguajes de programación.</p>
-    
+    <h1>📖 Manual de Usuario — NS+Gen v4.0</h1>
+
+    <p><strong>NS+Gen</strong> es un generador visual de diagramas Nassi-Schneidermann con exportación automática a múltiples lenguajes de programación. Desarrollado por Daniel Antonio Caamaño, estudiante de Analista de Sistemas en ORT Argentina (2026). Donado a ORT Argentina bajo licencia MIT.</p>
+
     <h2>🎯 Inicio Rápido</h2>
-    <p><strong>1. Crear un método:</strong> Click en "+ Nuevo" en el panel izquierdo</p>
-    <p><strong>2. Declarar variables:</strong> Usa los botones "+ VAR", "+ CONST", "+ PARAM"</p>
-    <p><strong>3. Agregar bloques:</strong> Click en "Zona de inserción" y luego en un bloque del panel derecho</p>
-    <p><strong>4. Exportar código:</strong> Click en "Código" y seleccioná el lenguaje (Java, Python, C++, C#, JavaScript)</p>
-    
+    <p>1. Hacé click en <strong>+ Nuevo</strong> para crear un método (clase, firma, tipo de retorno).</p>
+    <p>2. Declarás tus variables con <strong>+ VAR</strong>, constantes con <strong>+ CONST</strong> y parámetros con <strong>+ PARAM</strong>. Para cada una elegís el tipo en el selector y escribís el nombre.</p>
+    <p>3. Hacés click en una <strong>zona de inserción</strong> del diagrama ("+ antes" / "+ después") y luego elegís un bloque del panel derecho.</p>
+    <p>4. Exportás a código con el botón <strong>Código</strong> y seleccionás el lenguaje.</p>
+
+    <h2>🗂 Panel Izquierdo — Métodos</h2>
+    <p>Lista todos los métodos del proyecto. Podés ocultarlo con el botón <strong>☰</strong> de la topbar para ganar espacio en el diagrama. Las solapas superiores también permiten navegar entre métodos.</p>
+
     <h2>📦 Bloques Disponibles</h2>
-    <p><strong>Entrada/Salida:</strong></p>
-    <p>• <code>E</code> - Entrada (INPUT): Lee datos del usuario</p>
-    <p>• <code>S</code> - Salida (OUTPUT): Muestra datos en pantalla</p>
-    
-    <p><strong>Bloques básicos:</strong></p>
-    <p>• <code>I</code> - Instrucción: Cualquier operación</p>
-    <p>• <code>←</code> - Asignación: <code>variable = valor</code></p>
-    <p>• <code>/*</code> - Comentario: Notas y documentación</p>
-    
-    <p><strong>Selección:</strong></p>
-    <p>• <code>IF</code> - Si/No: Decisión condicional (Verdadero/Falso)</p>
-    <p>• <code>SW</code> - Según (SWITCH): Múltiples casos</p>
-    
-    <p><strong>Repetición:</strong></p>
-    <p>• <code>WH</code> - Mientras (WHILE): Repite mientras condición sea verdadera</p>
-    <p>• <code>DO</code> - Hacer-Mientras (DO-WHILE): Ejecuta al menos una vez</p>
-    <p>• <code>FOR</code> - Para (FOR): Repite un número determinado de veces</p>
-    <p>• <code>FE</code> - Para cada (FOREACH): Itera sobre colecciones</p>
-    
-    <p><strong>Funciones/Métodos:</strong></p>
-    <p>• <code>⇒</code> - Llamada: Invoca otro método</p>
-    <p>• <code>↩</code> - Return: Devuelve un valor</p>
-    
+    <p><strong>Entrada / Salida:</strong> E (INPUT — lee del usuario), S (OUTPUT — muestra en pantalla).</p>
+    <p><strong>Básicos:</strong> Instrucción (cualquier operación), Asignación (variable = valor), Comentario (documentación interna).</p>
+    <p><strong>Selección:</strong> IF (Si/No, con rama Verdadero y Falso), SWITCH (según — múltiples casos, podés agregar o eliminar casos).</p>
+    <p><strong>Repetición:</strong> WHILE (mientras condición sea verdadera), DO-WHILE (ejecuta al menos una vez), FOR (itera un número determinado de veces, formato: <code>i &lt;- 1, límite, paso</code>), FOREACH (itera sobre colecciones, formato: <code>Tipo var : coleccion</code>).</p>
+    <p><strong>Funciones/Métodos:</strong> Llamada (invoca otro método), Return (devuelve un valor).</p>
+
+    <h2>📝 Declaración de Variables</h2>
+    <p>Cada declaración tiene tres partes: un <strong>selector de tipo</strong> (int, double, float, long, short, byte, char, boolean, String, y sus variantes en array), un <strong>campo de nombre</strong> editable, y para las CONSTantes un <strong>campo de valor</strong>. El ancho de los campos se ajusta automáticamente al contenido.</p>
+    <p>La validación en tiempo real colorea las declaraciones: <strong>amarillo</strong> = declarada pero nunca usada en el diagrama, <strong>rojo</strong> = nombre posiblemente mal escrito (se usa en bloques pero no coincide con ninguna declaración). Esta validación ignora el contenido entre comillas dobles para evitar falsos positivos en bloques de salida.</p>
+
+    <h2>📍 Zonas de Inserción</h2>
+    <p>En modo edición, cada bloque tiene una zona <strong>"+ antes"</strong> (arriba del primer bloque) y <strong>"+ después"</strong> (debajo de cada bloque). Al hacer click en una zona queda activa (azul) y el panel derecho permite insertar el tipo de bloque deseado. Escape cancela la selección.</p>
+    <p>Con los botones <strong>✂ mover</strong> y <strong>⎘ copiar</strong> podés reubicar bloques dentro del diagrama. Los botones <strong>▲ ▼</strong> mueven el bloque una posición arriba o abajo dentro de su contenedor.</p>
+
+    <h2>🔢 Numeración de Bloques</h2>
+    <p>Cada bloque muestra un número secuencial gris a su izquierda en modo edición. La numeración es plana (no jerárquica) y se recalcula en cada render. Desaparece en modo presentación y en el PNG exportado.</p>
+
+    <h2>🔍 Búsqueda en el Diagrama</h2>
+    <p>El campo <strong>Buscar en diagrama</strong> de la topbar resalta en tiempo real todos los bloques y declaraciones que coincidan con el texto ingresado. Los bloques coincidentes se marcan con borde naranja grueso y el texto encontrado aparece resaltado en amarillo/negrita. El contador a la derecha del campo muestra cuántas coincidencias hay. <strong>Escape</strong> limpia la búsqueda.</p>
+
     <h2>⌨ Atajos de Teclado</h2>
-    <p>• <code>Escape</code> → Cancela la zona activa, el modo actual y cualquier selección. Funciona incluso si el cursor está dentro de un campo de texto.</p>
-    <p>• <code>Ctrl+↑ / Ctrl+↓</code> → Mueve el bloque seleccionado hacia arriba o abajo dentro de su contenedor.</p>
-    <p>• <code>Delete</code> → Elimina el bloque seleccionado (pide confirmación).</p>
-    <p>• <code>Ctrl+Alt+→ / ←</code> → Navega entre métodos cuando hay más de uno abierto.</p>
+    <p>• <code>Escape</code> → Cancela zona activa, modo y selección. Funciona incluso con foco en un campo de texto.</p>
+    <p>• <code>Ctrl+↑ / Ctrl+↓</code> → Mueve el bloque seleccionado arriba o abajo.</p>
+    <p>• <code>Delete</code> → Elimina el bloque seleccionado (con confirmación).</p>
+    <p>• <code>Ctrl+Alt+→ / ←</code> → Navega entre métodos.</p>
 
     <h2>💾 Guardar y Cargar</h2>
-    <p><strong>Guardar:</strong> Click en "💾 Guardar" - Descarga archivo .nsgen con tu proyecto</p>
-    <p><strong>Cargar:</strong> Click en "📂 Cargar" - Abre un archivo .nsgen guardado</p>
-    <p><strong>Historial:</strong> Click en "📚 Historial" - Recupera versiones anteriores (últimas 10)</p>
-    <p><strong>Autoguardado:</strong> Se guarda automáticamente cada 30 segundos en tu navegador</p>
-    
+    <p><strong>Guardar:</strong> Descarga un archivo <code>.nsgen</code> con todo el proyecto (métodos, bloques y declaraciones).</p>
+    <p><strong>Cargar:</strong> Abre un archivo <code>.nsgen</code> previamente guardado.</p>
+    <p><strong>Historial:</strong> Recupera las últimas 10 versiones guardadas automáticamente en el navegador.</p>
+    <p><strong>Autoguardado:</strong> Cada 30 segundos y con cada edición de bloque o declaración.</p>
+
     <h2>✓ Validación</h2>
-    <p>Click en "✓ Validar" para verificar tu diagrama. Detecta:</p>
-    <p>• Bloques sin condición (IF, WHILE sin condición)</p>
-    <p>• Bloques sin contenido (WHILE vacío)</p>
-    <p>• Entradas/Salidas vacías</p>
-    <p>• Estructuras incompletas</p>
-    
+    <p>El botón <strong>✓ Validar</strong> analiza el diagrama y reporta: bloques sin condición (IF, WHILE), bloques de repetición vacíos, entradas/salidas sin variable, declaraciones con tipo inválido, variables declaradas pero no usadas, y variables usadas en bloques pero no declaradas.</p>
+
     <h2>📤 Exportación de Código</h2>
-    <p><strong>Lenguajes soportados:</strong></p>
-    <p>• <strong>Java:</strong> Con Scanner automático y parsing por tipo</p>
-    <p>• <strong>Python:</strong> Con type hints y input()</p>
-    <p>• <strong>C++:</strong> Con std::cout y std::getline</p>
-    <p>• <strong>C#:</strong> Con Console.ReadLine y WriteLine</p>
-    <p>• <strong>JavaScript:</strong> Con console.log y prompt</p>
-    <p>• <strong>NS+ Code:</strong> Pseudocódigo estructurado</p>
-    <p>• <strong>ASCII Art:</strong> Diagrama en texto plano</p>
-    
-    <h2>📱 Uso en Android</h2>
-    <p><strong>Instalación:</strong></p>
-    <p>1. Abrí Chrome en tu Android</p>
-    <p>2. Andá a la URL de NS+Gen</p>
-    <p>3. Menú (⋮) → "Agregar a pantalla de inicio"</p>
-    <p>4. ¡Ya tenés la app instalada!</p>
-    
-    <p><strong>Funciona offline:</strong> Después de la primera carga, no necesitás internet</p>
-    
-    <h2>🎨 Modo Presentación</h2>
-    <p>Click en "📽 Presentación" para mostrar diagramas en pantalla completa sin herramientas de edición. Ideal para exponer en clase.</p>
-    
-    <h2>💡 Consejos</h2>
-    <p>• Declarar todas las variables antes de usarlas</p>
-    <p>• Usar nombres descriptivos para variables</p>
-    <p>• Validar el diagrama antes de exportar</p>
-    <p>• Guardar frecuentemente (aunque hay autoguardado)</p>
-    <p>• En Java: especificar tipos correctos para INPUT (int, double, float, String)</p>
-    
+    <p>Desde la vista <strong>Código</strong> podés seleccionar el lenguaje de salida: <strong>NS+ Code</strong> (pseudocódigo), <strong>Java</strong> (con Scanner automático y parsing por tipo), <strong>Python</strong> (con type hints), <strong>C++</strong> (con iostream), <strong>C#</strong> (con Console), <strong>JavaScript</strong> (con console.log/prompt), y <strong>ASCII Art</strong> (diagrama en texto plano para documentos).</p>
+    <p>El botón <strong>Exportar .txt</strong> descarga todos los lenguajes juntos en un único archivo de texto.</p>
+
+    <h2>🎨 Modo Presentación y Exportación PNG</h2>
+    <p>El botón <strong>📽 Presentación</strong> activa la vista limpia sin herramientas de edición, ideal para exponer en clase. En este modo aparece el botón <strong>💬 Comentarios</strong> para mostrar u ocultar los bloques de comentario.</p>
+    <p>El botón <strong>📷 PNG</strong> solo funciona en modo presentación. Exporta el diagrama completo (no solo la parte visible — incluye el scroll completo) como imagen de alta resolución. El nombre del archivo incluye un timestamp <code>AAAAMMDDHHMMSS</code> para ordenamiento cronológico. Si los comentarios están ocultos, se agrega el sufijo <code>_sinComentarios</code>.</p>
+
+    <h2>🌙 Tema Oscuro</h2>
+    <p>El botón de luna/sol en la topbar alterna entre modo claro y oscuro. La preferencia se guarda en el navegador.</p>
+
+    <h2>📱 Instalación como App (PWA)</h2>
+    <p>En Chrome/Firefox, abrí NS+Gen y usá "Agregar a pantalla de inicio" o "Instalar aplicación". Funciona 100% offline después de la primera carga.</p>
+
     <h2>📄 Licencia</h2>
-    <p>NS+Gen es <strong>código abierto</strong> bajo licencia MIT.</p>
-    <p>Creado por <strong>Daniel Antonio Caamaño</strong> - ORT Argentina 2026</p>
-    <p>Donado a ORT Argentina para uso educativo</p>
+    <p>NS+Gen es <strong>código abierto</strong> bajo licencia MIT. Repositorio: <code>github.com/dacaamano/nsgen-ort</code>.</p>
+    <p>Creado por <strong>Daniel Antonio Caamaño</strong> — ORT Argentina 2026. Donado a ORT Argentina para uso educativo libre.</p>
   `;
-  
   document.getElementById('manualContent').innerHTML = manualHTML;
 }
 
@@ -1906,11 +1923,92 @@ function toggleTheme(){
 }
 
 let sidebarVisible = true;
+let searchQuery = '';
+let blockCounter = 0; // contador global para numeración por render
+
 function toggleSidebar(){
   sidebarVisible = !sidebarVisible;
   document.querySelector('.app').classList.toggle('sidebar-hidden', !sidebarVisible);
   const btn = document.getElementById('btn-sidebar-toggle');
   if(btn) btn.style.opacity = sidebarVisible ? '1' : '0.5';
+}
+
+function exportPNG(){
+  if(!presentationMode){
+    alert('Para exportar PNG, activá primero el modo Presentación (botón 📽 Presentación).\nAsí podés elegir también si incluir o no los comentarios.');
+    return;
+  }
+  function doExport(){
+    const m = getActive();
+    if(!m){ alert('No hay método activo para exportar.'); return; }
+
+    const area = document.getElementById('diagramArea');
+
+    // Reemplazar inputs/selects/contenteditable por spans estáticos para que html2canvas los renderice bien
+    const replacements = [];
+    area.querySelectorAll('input, select, [contenteditable]').forEach(el => {
+      const span = document.createElement('span');
+      span.textContent = el.tagName === 'SELECT'
+        ? el.options[el.selectedIndex]?.text || ''
+        : (el.value !== undefined ? el.value : el.textContent);
+      // Copiar estilos computados relevantes
+      const cs = getComputedStyle(el);
+      span.style.cssText = `font-family:${cs.fontFamily};font-size:${cs.fontSize};color:${cs.color};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};background:transparent;display:inline;line-height:1.5`;
+      el.parentNode.insertBefore(span, el);
+      el.style.display = 'none';
+      replacements.push({span, el});
+    });
+
+    const origOverflow = area.style.overflow;
+    const origPadding = area.style.paddingBottom;
+    area.style.overflow = 'visible';
+    area.style.paddingBottom = '40px';
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const sigClean = m.sig.replace(/[^a-zA-Z0-9]/g,'_');
+    const commSuffix = showComments ? '' : '_sinComentarios';
+
+    setTimeout(()=>{
+      html2canvas(area, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        scrollX: 0, scrollY: 0,
+        width: area.scrollWidth,
+        height: area.scrollHeight + 40,
+        logging: false
+      }).then(canvas => {
+        // Restaurar inputs
+        replacements.forEach(({span, el}) => {
+          el.style.display = '';
+          span.remove();
+        });
+        area.style.overflow = origOverflow;
+        area.style.paddingBottom = origPadding;
+
+        const link = document.createElement('a');
+        link.download = `${m.name}_${sigClean}${commSuffix}_${ts}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }).catch(err=>{
+        replacements.forEach(({span, el}) => { el.style.display = ''; span.remove(); });
+        area.style.overflow = origOverflow;
+        area.style.paddingBottom = origPadding;
+        alert('Error al exportar: ' + err.message);
+      });
+    }, 100);
+  }
+  if(typeof html2canvas !== 'undefined'){
+    doExport();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = doExport;
+    script.onerror = ()=>alert('No se pudo cargar html2canvas. Verificá tu conexión a internet.');
+    document.head.appendChild(script);
+  }
 }
 
 // Mide el ancho exacto de un texto en píxeles usando canvas (fuente monospace 11px)
@@ -1925,6 +2023,23 @@ function saveDeclSpan(el, id, field){
     el.classList.remove('decl-placeholder');
   }
   updateDeclField(id, field, val);
+}
+
+function setSearch(q){
+  searchQuery = q.trim().toLowerCase();
+  render();
+  setTimeout(()=>{
+    const count = document.querySelectorAll('.ns-block.search-match').length;
+    const el = document.getElementById('search-count');
+    if(el) el.textContent = searchQuery ? (count > 0 ? count+'✓' : '0') : '';
+  }, 50);
+}
+
+function hlSearch(text){
+  if(!searchQuery || !text) return text ? esc(text) : '';
+  const escaped = String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const re = new RegExp('('+searchQuery.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  return escaped.replace(re,'<span class="search-hl">$1</span>');
 }
 
 function extractIdentifiers(text){
