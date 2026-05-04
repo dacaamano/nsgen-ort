@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NS+Gen — Generador de Diagramas Nassi-Schneidermann</title>
 <meta name="author" content="Daniel Antonio Caamaño - Estudiante de Analista de Sistemas, ORT Argentina">
-<meta name="description" content="Generador visual de diagramas Nassi-Schneidermann con exportación automática a Java, Python y pseudocódigo">
+<meta name="description" content="Generador visual de diagramas Nassi-Schneidermann con creación visual de diagramas para uso educativo">
 <meta name="keywords" content="Nassi-Schneidermann, NS+, diagramas, programación, ORT Argentina, educación">
 <meta name="license" content="MIT License - Código Abierto">
 
@@ -130,7 +130,7 @@ h1{font-size:13px}
 .manual-content h2{color:var(--code-text);margin-top:32px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px}
 .manual-content p{margin:16px 0}
 .manual-content code{background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:3px;font-family:monospace}
-.code-lang-tabs{display:flex;border-bottom:1px solid var(--code-border);flex-shrink:0}
+/* code-lang-tabs removed */
 .clt{font-size:11px;padding:7px 16px;cursor:pointer;color:var(--code-text);background:transparent;border:none;border-bottom:2px solid transparent;font-weight:500}
 .clt:hover{color:#e6edf3}
 .clt.active.ns{color:var(--ns-green);border-bottom-color:var(--ns-green)}
@@ -320,7 +320,6 @@ body.hide-comments .b-com{display:none !important}
   <button onclick="document.getElementById('load-input').click()">📂 Cargar</button>
   <input type="file" id="load-input" accept=".nsgen" style="display:none" onchange="loadProject(this)">
   <button onclick="showHistoryPanel()">📜 Historial</button>
-  <!--<button onclick="exportDiagram()">Exportar .txt</button>-->
   <button onclick="validateAll()" style="background:rgba(255,200,50,0.15);border-color:rgba(255,200,50,0.4)">✓ Validar</button>
   <button onclick="exportPNG()" title="Exportar PNG — requiere modo Presentación activo">📷 PNG</button>
   <div class="topbar-sep"></div>
@@ -334,8 +333,7 @@ body.hide-comments .b-com{display:none !important}
     <span id="search-count" style="position:absolute;right:7px;font-size:10px;color:rgba(255,255,255,0.6);pointer-events:none"></span>
   </div>
   <button class="view-tab active" id="vt-v" onclick="setView('visual')">Diagrama</button>
-  <!--<button class="view-tab" id="vt-c" onclick="setView('code')">Código</button>-->
-  <!--<button class="view-tab" id="vt-m" onclick="setView('manual')">📖 Manual</button>-->
+  <button class="view-tab" id="vt-m" onclick="setView('manual')">📖 Manual</button>
   <button class="view-tab" id="vt-pres" onclick="togglePresentation()" style="margin-left:8px">📽 Presentación</button>
   <button class="view-tab" id="vt-comm" onclick="toggleComments()" style="display:none">💬 Comentarios</button>
 </div>
@@ -350,23 +348,6 @@ body.hide-comments .b-com{display:none !important}
   <div class="tabs-row" id="tabsRow"></div>
   <div id="viewVisual" style="flex:1;overflow:auto;display:flex;flex-direction:column">
     <div class="diagram-area" id="diagramArea"></div>
-  </div>
-  <div id="viewCode" class="code-panel" style="display:none">
-    <div class="code-lang-tabs">
-      <button class="clt active ns" id="clt-ns" onclick="setLang('ns')">NS+ Code</button>
-      <button class="clt java" id="clt-java" onclick="setLang('java')">Java</button>
-      <button class="clt python" id="clt-python" onclick="setLang('python')">Python</button>
-      <button class="clt cpp" id="clt-cpp" onclick="setLang('cpp')">C++</button>
-      <button class="clt csharp" id="clt-csharp" onclick="setLang('csharp')">C#</button>
-      <button class="clt js" id="clt-js" onclick="setLang('js')">JavaScript</button>
-      <button class="clt" id="clt-ascii" onclick="setLang('ascii')" style="color:#56d364">ASCII Art</button>
-    </div>
-    <div class="code-copy-bar">
-      <button onclick="toggleLineNumbers()" id="line-num-btn" style="margin-right:8px">🔢 Numeración</button>
-      <button onclick="copyCode()" id="copy-btn">Copiar código</button>
-      <div id="notification" class="notification"></div>
-    </div>
-    <div class="code-block ns" id="codeBlock"></div>
   </div>
   <div id="viewManual" class="manual-panel" style="display:none">
     <div class="manual-content" id="manualContent">
@@ -428,7 +409,7 @@ body.hide-comments .b-com{display:none !important}
   <div class="welcome-box">
     <h1>🎨 NS+Gen</h1>
     <p class="welcome-subtitle">Generador de Diagramas Nassi-Schneidermann</p>
-    <p class="welcome-desc">Creá diagramas visuales y exportá código a Java, Python, C++, C#, JavaScript y más.</p>
+    <p class="welcome-desc">Creá diagramas Nassi-Schneidermann de forma visual e interactiva.</p>
     
     <div class="welcome-buttons">
       <button class="welcome-btn-primary" onclick="closeWelcome()">
@@ -492,27 +473,14 @@ function getActive(){return methods.find(m=>m.id===activeMethodId);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
 function setView(v){
-  currentView=v;
-  document.getElementById('viewVisual').style.display=v==='visual'?'flex':'none';
-  document.getElementById('viewCode').style.display=v==='code'?'flex':'none';
-  document.getElementById('viewManual').style.display=v==='manual'?'block':'none';
-  document.getElementById('vt-v').classList.toggle('active',v==='visual');
-  document.getElementById('vt-c').classList.toggle('active',v==='code');
-  document.getElementById('vt-m').classList.toggle('active',v==='manual');
-  if(v==='code') renderCodeView();
-  if(v==='manual') renderManual();
+  currentView=v==='code'?'visual':v; // redirige 'code' a visual por si acaso
+  document.getElementById('viewVisual').style.display=currentView==='visual'?'flex':'none';
+  document.getElementById('viewManual').style.display=currentView==='manual'?'block':'none';
+  const vtv=document.getElementById('vt-v'); if(vtv) vtv.classList.toggle('active',currentView==='visual');
+  const vtm=document.getElementById('vt-m'); if(vtm) vtm.classList.toggle('active',currentView==='manual');
+  if(currentView==='manual') renderManual();
 }
 
-function setLang(lang){
-  currentLang=lang;
-  ['ns','java','python','cpp','csharp','js','ascii'].forEach(l=>{
-    let el=document.getElementById('clt-'+l);
-    if(el) el.classList.toggle('active',l===lang);
-  });
-  let cb=document.getElementById('codeBlock');
-  cb.className='code-block '+(lang==='ascii'?'ns':lang);
-  renderCodeView();
-}
 
 function toggleSec(s){
   collapsedSecs[s]=!collapsedSecs[s];
@@ -968,904 +936,56 @@ function renderDiagram(){
   document.getElementById('diagramArea').innerHTML=`<div class="mhbox"><div class="mhtitle">${esc(m.name)} → ${esc(m.sig)} : ${esc(m.returnType)}${editBtns}</div><div class="decl-section">${decls}<div class="decl-add"><button onclick="addDecl('VAR')">+ VAR</button><button onclick="addDecl('CONST')">+ CONST</button><button onclick="addDecl('PARAM')">+ PARAM</button></div></div></div><div class="ns-diagram">${blocks}</div>`;
 }
 
-function parseForHeader(h){
-  let parts=h.split(',').map(s=>s.trim());
-  if(parts.length===3){
-    let initRaw=parts[0].replace('<-','=').replace('←','=').trim();
-    let limitRaw=parts[1].trim();
-    let step=parts[2].trim();
-    // Extraer nombre de variable — puede venir como "i = 1" o "i <- 1"
-    let varName=initRaw.split(/[=\s]/)[0].trim();
-    // Agregar 'int' si el init no tiene tipo declarado (caso más común en NS+)
-    let init = /^[a-zA-Z_][a-zA-Z0-9_]*\s*=/.test(initRaw) ? `int ${initRaw}` : initRaw;
-    return {init, limit:`${varName} <= ${limitRaw}`, update:`${varName} += ${step}`, varName};
-  }
-  return {init:h, limit:'', update:'', varName:'i'};
-}
-
-function parseForeachHeader(h){
-  let m=h.match(/(\S+)\s+(\w+)\s*:\s*(.+)/);
-  if(m) return {type:m[1],varName:m[2],collection:m[3]};
-  return {type:'var',varName:'item',collection:h};
-}
-
-function parseAsig(label){return label.replace('←','=').replace('<-','=');}
-
-function genNS(m){
-  function bc(b,ind){
-    if(b.type==='E') return `${ind}INPUT ${b.label}\n`;
-    if(b.type==='S') return `${ind}OUTPUT ${b.label}\n`;
-    if(b.type==='INSTR'||b.type==='ASIG') return `${ind}INSTR ${b.label}\n`;
-    if(b.type==='COMMENT') return `${ind}/** ${b.label} */\n`;
-    if(b.type==='CALL') return `${ind}CALL ${b.label}\n`;
-    if(b.type==='RETURN') return `${ind}RETURN ${b.label}\n`;
-    if(b.type==='IF'){let c=`${ind}IF ${b.cond}\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'  ')).join('');c+=`${ind}ELSE\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'  ')).join('');return c+`${ind}ENDIF\n`;}
-    if(b.type==='SWITCH'){let c=`${ind}SWITCH ${b.expr}\n`;b.cases.forEach(cas=>{c+=`${ind}CASE ${cas.label}\n`;c+=cas.blocks.map(x=>bc(x,ind+'  ')).join('');});return c+`${ind}ENDSWITCH\n`;}
-    if(b.type==='WHILE'){return `${ind}WHILE ${b.cond}\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}ENDWHILE\n`;}
-    if(b.type==='DOWHILE'){return `${ind}DOWHILE\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}UNTIL ${b.cond}\n`;}
-    if(b.type==='FOR'){return `${ind}FOR ${b.header}\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}ENDFOR\n`;}
-    if(b.type==='FOREACH'){return `${ind}FOREACH ${b.header}\n`+b.bodyBlocks.map(x=>bc(x,ind+'  ')).join('')+`${ind}ENDFOREACH\n`;}
-    return '';
-  }
-  let d=m.decls.map(d=>(d.type==='VAR'?'VAR ':d.type==='CONST'?'CONST ':'PARAM ')+getDeclJavaLabel(d)+'\n').join('');
-  return `${m.name}\n  ${m.sig}\n\n${d}${m.blocks.map(b=>bc(b,'  ')).join('')}`;
-}
-
-function genJava(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>getDeclJavaLabel(d)).join(', ');
-  let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
-  
-  // Check if there are any INPUT blocks in the entire tree
-  function hasInput(blocks){
-    for(const b of (blocks||[])){
-      if(b.type==='E') return true;
-      if(hasInput(b.thenBlocks)) return true;
-      if(hasInput(b.elseBlocks)) return true;
-      if(hasInput(b.bodyBlocks)) return true;
-      if(b.cases) for(const c of b.cases) if(hasInput(c.blocks)) return true;
-    }
-    return false;
-  }
-  const needsScanner = hasInput(m.blocks);
-  
-  // Build a map of variable types for INPUT parsing
-  let varTypes = {};
-  m.decls.filter(d=>d.type==='VAR' || d.type==='PARAM').forEach(d=>{
-    const {typeId,name} = getDeclParts(d);
-    const t = getDeclType(typeId);
-    varTypes[name] = t.java;
-  });
-  
-  // CONST → static final class attributes
-  let constAttrs=m.decls.filter(d=>d.type==='CONST')
-    .map(d=>{
-      const label = getDeclJavaLabel(d).replace(/^\s*final\s+/i,'');
-      return `    private static final ${label};`;
-    }).join('\n');
-  
-  // Add Scanner as static attribute if needed
-  if(needsScanner){
-    constAttrs = constAttrs 
-      ? constAttrs + '\n    private static Scanner input = new Scanner(System.in);'
-      : '    private static Scanner input = new Scanner(System.in);';
-  }
-  
-  // VAR → local variables inside method only
-  let localVars=m.decls.filter(d=>d.type==='VAR')
-    .map(d=>`        ${getDeclJavaLabel(d)};`).join('\n');
-    
-  function bc(b,ind){
-    if(b.type==='E'){
-      // Extract variable name from label (e.g. "int numero" → "numero")
-      let parts = b.label.trim().split(/\s+/);
-      let varName = parts.length >= 2 ? parts[parts.length - 1] : parts[0];
-      let varType = varTypes[varName] || 'String';
-      
-      // Generate appropriate parsing based on type
-      let inputCode;
-      if(varType === 'int' || varType === 'Integer'){
-        inputCode = `${varName} = Integer.parseInt(input.nextLine());`;
-      } else if(varType === 'double' || varType === 'Double'){
-        inputCode = `${varName} = Double.parseDouble(input.nextLine());`;
-      } else if(varType === 'float' || varType === 'Float'){
-        inputCode = `${varName} = Float.parseFloat(input.nextLine());`;
-      } else if(varType === 'long' || varType === 'Long'){
-        inputCode = `${varName} = Long.parseLong(input.nextLine());`;
-      } else if(varType === 'boolean' || varType === 'Boolean'){
-        inputCode = `${varName} = Boolean.parseBoolean(input.nextLine());`;
-      } else {
-        inputCode = `${varName} = input.nextLine();`;
-      }
-      
-      return `${ind}${inputCode} // INPUT ${b.label}\n`;
-    }
-    if(b.type==='S') return `${ind}System.out.println(${b.label});\n`;
-    if(b.type==='INSTR') return `${ind}${b.label};\n`;
-    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
-    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
-    if(b.type==='CALL') return `${ind}${b.label};\n`;
-    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
-    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
-    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
-    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
-    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for (${p.type} ${p.varName} : ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    return '';
-  }
-  
-  let body=m.blocks.map(b=>bc(b,'        ')).join('');
-  
-  // Add scanner close at end if needed
-  if(needsScanner) body += '        input.close();\n';
-  
-  // Add import if Scanner is needed
-  let imports = needsScanner ? 'import java.util.Scanner;\n\n' : '';
-  
-  return `${imports}public class ${m.name} {\n${constAttrs?constAttrs+'\n':''}\n    public ${m.returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n}\n`;
-}
-
-function genPython(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
-    const {name}=getDeclParts(d); return name;
-  }).join(', ');
-  let methodName=m.sig.replace(/\(.*\)/,'').trim();
-  function pyType(typeId){ const t=getDeclType(typeId); return t.py; }
-  function bc(b,ind){
-    if(b.type==='E'){let v=b.label.trim().split(/\s+/).pop();return `${ind}${v} = input()  # INPUT ${b.label}\n`;}
-    if(b.type==='S') return `${ind}print(${b.label})\n`;
-    if(b.type==='INSTR') return `${ind}${b.label}\n`;
-    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)}\n`;
-    if(b.type==='COMMENT') return `${ind}# ${b.label}\n`;
-    if(b.type==='CALL') return `${ind}${b.label.replace(';','')}\n`;
-    if(b.type==='RETURN') return `${ind}return ${b.label}\n`;
-    if(b.type==='IF'){let c=`${ind}if ${b.cond}:\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');if(b.elseBlocks.length>0){c+=`${ind}else:\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');}return c;}
-    if(b.type==='SWITCH'){let c=`${ind}# SWITCH ${b.expr}\n`;b.cases.forEach((cas,ci)=>{c+=ci===0?`${ind}if ${b.expr} == ${cas.label}:\n`:(cas.label==='default'?`${ind}else:\n`:`${ind}elif ${b.expr} == ${cas.label}:\n`);let body=cas.blocks.map(x=>bc(x,ind+'    ')).join('');c+=body||`${ind}    pass\n`;});return c;}
-    if(b.type==='WHILE'){return `${ind}while ${b.cond}:\n`+(b.bodyBlocks.length>0?b.bodyBlocks.map(x=>bc(x,ind+'    ')).join(''):`${ind}    pass\n`);}
-    if(b.type==='DOWHILE'){let body=b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('');return `${ind}while True:\n${body}${ind}    if not (${b.cond}):\n${ind}        break\n`;}
-    if(b.type==='FOR'){let p=parseForHeader(b.header);let parts=p.init.split(/[=\s]+/);let vn=parts.length>=2?parts[parts.length-2]:p.varName;let start=parts[parts.length-1];let limitParts=p.limit.split(/<=|</).map(s=>s.trim());let end=limitParts[limitParts.length-1];let step=p.update.includes('+=')?p.update.split('+=')[1].trim():'1';return `${ind}for ${vn} in range(${start}, ${end}+1, ${step}):\n`+(b.bodyBlocks.length>0?b.bodyBlocks.map(x=>bc(x,ind+'    ')).join(''):`${ind}    pass\n`);}
-    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for ${p.varName} in ${p.collection}:\n`+(b.bodyBlocks.length>0?b.bodyBlocks.map(x=>bc(x,ind+'    ')).join(''):`${ind}    pass\n`);}
-    return '';
-  }
-  // CONST → module-level constants only
-  let consts=m.decls.filter(d=>d.type==='CONST').map(d=>{
-    const {typeId,name,value}=getDeclParts(d);
-    return `${name}: ${pyType(typeId)} = ${value||'None'}`;
-  }).join('\n');
-  // VAR → typed local variables inside method only
-  let localVars=m.decls.filter(d=>d.type==='VAR').map(d=>{
-    const {typeId,name,value}=getDeclParts(d);
-    return `        ${name}: ${pyType(typeId)} = ${value||'None'}`;
-  }).join('\n');
-  let body=m.blocks.map(b=>bc(b,'        ')).join('');
-  let retHint=m.returnType==='void'?'None':pyType(m.returnType);
-  return `${consts?consts+'\n\n':''}class ${m.name}:\n    def ${methodName}(${params?'self, '+params:'self'}) -> ${retHint}:\n${localVars?localVars+'\n':''}${body||'        pass\n'}`;
-}
-
-function genCpp(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
-    const {typeId,name}=getDeclParts(d);
-    return `${getDeclType(typeId).cpp} ${name}`;
-  }).join(', ');
-  let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
-  
-  // Check if there are any INPUT blocks
-  function hasInput(blocks){
-    for(const b of (blocks||[])){
-      if(b.type==='E') return true;
-      if(hasInput(b.thenBlocks)) return true;
-      if(hasInput(b.elseBlocks)) return true;
-      if(hasInput(b.bodyBlocks)) return true;
-      if(b.cases) for(const c of b.cases) if(hasInput(c.blocks)) return true;
-    }
-    return false;
-  }
-  const needsGetline = hasInput(m.blocks);
-  
-  // CONST → static const class attributes
-  let constAttrs=m.decls.filter(d=>d.type==='CONST')
-    .map(d=>{
-      const {typeId,name,value}=getDeclParts(d);
-      const t=getDeclType(typeId);
-      return `    static const ${t.cpp} ${name}${value?' = '+value:''};`;
-    }).join('\n');
-  
-  // VAR → local variables inside method only
-  let localVars=m.decls.filter(d=>d.type==='VAR')
-    .map(d=>{
-      const {typeId,name,value}=getDeclParts(d);
-      const t=getDeclType(typeId);
-      return `        ${t.cpp} ${name}${value?' = '+value:''};`;
-    }).join('\n');
-    
-  function bc(b,ind){
-    if(b.type==='E'){
-      let varName = b.label.trim().split(/\s+/).pop();
-      return `${ind}std::getline(std::cin, ${varName}); // INPUT\n`;
-    }
-    if(b.type==='S') return `${ind}std::cout << ${b.label} << std::endl;\n`;
-    if(b.type==='INSTR') return `${ind}${b.label};\n`;
-    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
-    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
-    if(b.type==='CALL') return `${ind}${b.label};\n`;
-    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
-    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
-    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
-    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
-    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for (${p.type} ${p.varName} : ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    return '';
-  }
-  
-  let body=m.blocks.map(b=>bc(b,'        ')).join('');
-  
-  let includes = needsGetline ? '#include <iostream>\n#include <string>\n\n' : '#include <iostream>\n\n';
-  
-  return `${includes}class ${m.name} {\npublic:\n${constAttrs?constAttrs+'\n\n':''}\n    ${m.returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n};\n`;
-}
-
-function genCSharp(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
-    const {typeId,name}=getDeclParts(d);
-    const t=getDeclType(typeId);
-    return `${t.cs} ${name}`;
-  }).join(', ');
-  let sigBase=m.sig.replace(/\(.*\)/,`(${params})`);
-  
-  // Capitalize method name for C# convention
-  let methodName = sigBase.split('(')[0].trim();
-  methodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);
-  sigBase = methodName + '(' + sigBase.split('(')[1];
-  
-  function csharpType(typeId){
-    return getDeclType(typeId).cs;
-  }
-
-  // CONST → static readonly class attributes
-  let constAttrs=m.decls.filter(d=>d.type==='CONST')
-    .map(d=>{
-      const {typeId,name,value}=getDeclParts(d);
-      return `    private static readonly ${csharpType(typeId)} ${name}${value?' = '+value:''};`;
-    }).join('\n');
-  
-  // VAR → local variables inside method only
-  let localVars=m.decls.filter(d=>d.type==='VAR')
-    .map(d=>{
-      const {typeId,name,value}=getDeclParts(d);
-      return `        ${csharpType(typeId)} ${name}${value?' = '+value:''};`;
-    }).join('\n');
-  
-  function bc(b,ind){
-    if(b.type==='E'){
-      let varName = b.label.trim().split(/\s+/).pop();
-      return `${ind}${varName} = Console.ReadLine(); // INPUT\n`;
-    }
-    if(b.type==='S') return `${ind}Console.WriteLine(${b.label});\n`;
-    if(b.type==='INSTR') return `${ind}${b.label};\n`;
-    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
-    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
-    if(b.type==='CALL') return `${ind}${b.label};\n`;
-    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
-    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
-    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
-    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
-    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}foreach (${p.type} ${p.varName} in ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    return '';
-  }
-  
-  let body=m.blocks.map(b=>bc(b,'        ')).join('');
-  
-  let returnType = csharpType(m.returnType);
-  
-  return `using System;\n\nclass ${m.name} {\n${constAttrs?constAttrs+'\n\n':''}\n    public ${returnType} ${sigBase} {\n${localVars?localVars+'\n':''}${body}    }\n}\n`;
-}
-
-function genJavaScript(m){
-  let params=m.decls.filter(d=>d.type==='PARAM').map(d=>{
-    const {name}=getDeclParts(d); return name;
-  }).join(', ');
-  
-  let methodName=m.sig.replace(/\(.*\)/,'').trim();
-  
-  // CONST → module-level constants
-  let consts=m.decls.filter(d=>d.type==='CONST').map(d=>{
-    const {name,value}=getDeclParts(d);
-    return `const ${name} = ${value||'null'};`;
-  }).join('\n');
-  
-  // VAR → let variables inside function
-  let localVars=m.decls.filter(d=>d.type==='VAR').map(d=>{
-    const {name,value}=getDeclParts(d);
-    return `    let ${name} = ${value||'null'};`;
-  }).join('\n');
-    
-  function bc(b,ind){
-    if(b.type==='E'){
-      let varName = b.label.trim().split(/\s+/).pop();
-      return `${ind}${varName} = prompt("${b.label}"); // INPUT\n`;
-    }
-    if(b.type==='S') return `${ind}console.log(${b.label});\n`;
-    if(b.type==='INSTR') return `${ind}${b.label};\n`;
-    if(b.type==='ASIG') return `${ind}${parseAsig(b.label)};\n`;
-    if(b.type==='COMMENT') return `${ind}// ${b.label}\n`;
-    if(b.type==='CALL') return `${ind}${b.label.replace(/;$/,'')};\n`;
-    if(b.type==='RETURN') return `${ind}return ${b.label};\n`;
-    if(b.type==='IF'){let c=`${ind}if (${b.cond}) {\n`;c+=b.thenBlocks.map(x=>bc(x,ind+'    ')).join('');c+=`${ind}} else {\n`;c+=b.elseBlocks.map(x=>bc(x,ind+'    ')).join('');return c+`${ind}}\n`;}
-    if(b.type==='SWITCH'){let c=`${ind}switch (${b.expr}) {\n`;b.cases.forEach(cas=>{c+=(cas.label==='default'?`${ind}    default:\n`:`${ind}    case ${cas.label}:\n`);c+=cas.blocks.map(x=>bc(x,ind+'        ')).join('');c+=`${ind}        break;\n`;});return c+`${ind}}\n`;}
-    if(b.type==='WHILE'){return `${ind}while (${b.cond}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='DOWHILE'){return `${ind}do {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}} while (${b.cond});\n`;}
-    if(b.type==='FOR'){let p=parseForHeader(b.header);return `${ind}for (${p.init}; ${p.limit}; ${p.update}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    if(b.type==='FOREACH'){let p=parseForeachHeader(b.header);return `${ind}for (const ${p.varName} of ${p.collection}) {\n`+b.bodyBlocks.map(x=>bc(x,ind+'    ')).join('')+`${ind}}\n`;}
-    return '';
-  }
-  
-  let body=m.blocks.map(b=>bc(b,'    ')).join('');
-  
-  return `${consts?consts+'\n\n':''}function ${methodName}(${params}) {\n${localVars?localVars+'\n':''}${body}}\n`;
-}
-
-
-function toggleLineNumbers(){
-  showLineNumbers = !showLineNumbers;
-  const btn = document.getElementById('line-num-btn');
-  if(btn) btn.style.opacity = showLineNumbers ? '1' : '0.6';
-  renderCodeView();
-}
-
-function renderCodeView(){
-  let saved=activeMethodId;
-  let allNS      =methods.map(m=>{activeMethodId=m.id;return `--- ${m.name}: ${m.sig} ---\n`+genNS(m);}).join('\n');
-  let allJava    =methods.map(m=>{activeMethodId=m.id;return genJava(m);}).join('\n\n');
-  let allPython  =methods.map(m=>{activeMethodId=m.id;return genPython(m);}).join('\n\n');
-  let allCpp     =methods.map(m=>{activeMethodId=m.id;return genCpp(m);}).join('\n\n');
-  let allCSharp  =methods.map(m=>{activeMethodId=m.id;return genCSharp(m);}).join('\n\n');
-  let allJS      =methods.map(m=>{activeMethodId=m.id;return genJavaScript(m);}).join('\n\n');
-  let allASCII   =methods.map(m=>{activeMethodId=m.id;return genASCII(m);}).join('\n\n');
-  activeMethodId=saved;
-  
-  let content = '';
-  if(currentLang==='ns')         content = allNS;
-  else if(currentLang==='java')  content = allJava;
-  else if(currentLang==='python') content = allPython;
-  else if(currentLang==='cpp')   content = allCpp;
-  else if(currentLang==='csharp') content = allCSharp;
-  else if(currentLang==='js')    content = allJS;
-  else if(currentLang==='ascii') content = allASCII;
-  else                           content = allNS;
-  
-  // Add line numbers if enabled
-  if(showLineNumbers){
-    const lines = content.split('\n');
-    const maxDigits = String(lines.length).length;
-    content = lines.map((line, i) => {
-      const num = String(i + 1).padStart(maxDigits, ' ');
-      return `${num}  ${line}`;
-    }).join('\n');
-  }
-  
-  document.getElementById('codeBlock').textContent = content;
-}
-
 function renderManual(){
   const manualHTML = `
     <h1>📖 Manual de Usuario — NS+Gen v4.0</h1>
-
-    <p><strong>NS+Gen</strong> es un generador visual de diagramas Nassi-Schneidermann con exportación automática a múltiples lenguajes de programación. Desarrollado por Daniel Antonio Caamaño, estudiante de Analista de Sistemas en ORT Argentina (2026). Donado a ORT Argentina bajo licencia MIT.</p>
+    <p><strong>NS+Gen</strong> es un generador visual de diagramas Nassi-Schneidermann. Permite crear, editar, guardar y exportar como imagen diagramas NS+ de forma interactiva en el navegador, sin instalación ni conexión a internet tras la primera carga.</p>
+    <p>Desarrollado por <strong>Daniel Antonio Caamaño</strong> — ORT Argentina 2026. Donado a ORT Argentina bajo licencia MIT.</p>
 
     <h2>🎯 Inicio Rápido</h2>
-    <p>1. Hacé click en <strong>+ Nuevo</strong> para crear un método (clase, firma, tipo de retorno).</p>
+    <p>1. Hacé click en <strong>+ Nuevo</strong> para crear un método (clase, firma y tipo de retorno).</p>
     <p>2. Declarás tus variables con <strong>+ VAR</strong>, constantes con <strong>+ CONST</strong> y parámetros con <strong>+ PARAM</strong>. Para cada una elegís el tipo en el selector y escribís el nombre.</p>
-    <p>3. Hacés click en una <strong>zona de inserción</strong> del diagrama ("+ antes" / "+ después") y luego elegís un bloque del panel derecho.</p>
-    <p>4. Exportás a código con el botón <strong>Código</strong> y seleccionás el lenguaje.</p>
+    <p>3. Hacés click en una zona de inserción ("+ antes" / "+ después") y elegís un bloque del panel derecho.</p>
+    <p>4. Guardás con <strong>💾 Guardar</strong> o exportás como imagen con <strong>📷 PNG</strong> (desde modo presentación).</p>
 
-    <h2>🗂 Panel Izquierdo — Métodos</h2>
-    <p>Lista todos los métodos del proyecto. Podés ocultarlo con el botón <strong>☰</strong> de la topbar para ganar espacio en el diagrama. Las solapas superiores también permiten navegar entre métodos.</p>
+    <h2>🗂 Panel Izquierdo</h2>
+    <p>Lista todos los métodos del proyecto. Ocultalo con el botón <strong>☰</strong> para ganar espacio. Las solapas superiores permiten navegar entre métodos.</p>
 
     <h2>📦 Bloques Disponibles</h2>
-    <p><strong>Entrada / Salida:</strong> E (INPUT — lee del usuario), S (OUTPUT — muestra en pantalla).</p>
-    <p><strong>Básicos:</strong> Instrucción (cualquier operación), Asignación (variable = valor), Comentario (documentación interna).</p>
-    <p><strong>Selección:</strong> IF (Si/No, con rama Verdadero y Falso), SWITCH (según — múltiples casos, podés agregar o eliminar casos).</p>
-    <p><strong>Repetición:</strong> WHILE (mientras condición sea verdadera), DO-WHILE (ejecuta al menos una vez), FOR (itera un número determinado de veces, formato: <code>i &lt;- 1, límite, paso</code>), FOREACH (itera sobre colecciones, formato: <code>Tipo var : coleccion</code>).</p>
-    <p><strong>Funciones/Métodos:</strong> Llamada (invoca otro método), Return (devuelve un valor).</p>
+    <p><strong>Entrada / Salida:</strong> E (Entrada — lectura de dato), S (Salida — muestra de dato).</p>
+    <p><strong>Básicos:</strong> Instrucción, Asignación (variable ← valor), Comentario.</p>
+    <p><strong>Selección:</strong> IF (Si/No con rama V y F), SWITCH (Según — múltiples casos).</p>
+    <p><strong>Repetición:</strong> WHILE (Mientras), DO-WHILE (Hacer-Mientras), FOR (Para — formato: <code>variable &lt;- inicio, límite, paso</code>), FOREACH (Para cada — formato: <code>Tipo variable : coleccion</code>).</p>
+    <p><strong>Funciones:</strong> Llamada, Return.</p>
 
-    <h2>📝 Declaración de Variables</h2>
-    <p>Cada declaración tiene tres partes: un <strong>selector de tipo</strong> (int, double, float, long, short, byte, char, boolean, String, y sus variantes en array), un <strong>campo de nombre</strong> editable, y para las CONSTantes un <strong>campo de valor</strong>. El ancho de los campos se ajusta automáticamente al contenido.</p>
-    <p>La validación en tiempo real colorea las declaraciones: <strong>amarillo</strong> = declarada pero nunca usada en el diagrama, <strong>rojo</strong> = nombre posiblemente mal escrito (se usa en bloques pero no coincide con ninguna declaración). Esta validación ignora el contenido entre comillas dobles para evitar falsos positivos en bloques de salida.</p>
+    <h2>📝 Declaraciones</h2>
+    <p>Selector de tipo (int, double, float, long, short, byte, char, boolean, String y arrays), campo de nombre auto-ajustable y campo de valor para CONSTantes. Validación en tiempo real: <strong>amarillo</strong> = declarada pero no usada · <strong>rojo</strong> = usada en bloques pero no declarada.</p>
 
-    <h2>📍 Zonas de Inserción</h2>
-    <p>En modo edición, cada bloque tiene una zona <strong>"+ antes"</strong> (arriba del primer bloque) y <strong>"+ después"</strong> (debajo de cada bloque). Al hacer click en una zona queda activa (azul) y el panel derecho permite insertar el tipo de bloque deseado. Escape cancela la selección.</p>
-    <p>Con los botones <strong>✂ mover</strong> y <strong>⎘ copiar</strong> podés reubicar bloques dentro del diagrama. Los botones <strong>▲ ▼</strong> mueven el bloque una posición arriba o abajo dentro de su contenedor.</p>
+    <h2>📍 Zonas de Inserción y Edición</h2>
+    <p>Cada contenedor tiene zona <strong>+ antes</strong> y <strong>+ después</strong>. Click en la zona → click en el bloque del panel derecho. <strong>Escape</strong> cancela. Con ✂ mover y ⎘ copiar podés reubicar bloques. ▲ ▼ los mueven una posición.</p>
 
-    <h2>🔢 Numeración de Bloques</h2>
-    <p>Cada bloque muestra un número secuencial gris a su izquierda en modo edición. La numeración es plana (no jerárquica) y se recalcula en cada render. Desaparece en modo presentación y en el PNG exportado.</p>
+    <h2>🔢 Numeración · 🔍 Búsqueda</h2>
+    <p>Cada bloque tiene un número secuencial en modo edición (desaparece en presentación). El campo de búsqueda en la topbar resalta bloques y declaraciones coincidentes con borde naranja. Escape limpia la búsqueda.</p>
 
-    <h2>🔍 Búsqueda en el Diagrama</h2>
-    <p>El campo <strong>Buscar en diagrama</strong> de la topbar resalta en tiempo real todos los bloques y declaraciones que coincidan con el texto ingresado. Los bloques coincidentes se marcan con borde naranja grueso y el texto encontrado aparece resaltado en amarillo/negrita. El contador a la derecha del campo muestra cuántas coincidencias hay. <strong>Escape</strong> limpia la búsqueda.</p>
-
-    <h2>⌨ Atajos de Teclado</h2>
-    <p>• <code>Escape</code> → Cancela zona activa, modo y selección. Funciona incluso con foco en un campo de texto.</p>
-    <p>• <code>Ctrl+↑ / Ctrl+↓</code> → Mueve el bloque seleccionado arriba o abajo.</p>
-    <p>• <code>Delete</code> → Elimina el bloque seleccionado (con confirmación).</p>
-    <p>• <code>Ctrl+Alt+→ / ←</code> → Navega entre métodos.</p>
+    <h2>⌨ Atajos</h2>
+    <p><code>Escape</code> cancela selección · <code>Ctrl+↑↓</code> mueve bloque · <code>Delete</code> elimina · <code>Ctrl+Alt+←→</code> navega entre métodos.</p>
 
     <h2>💾 Guardar y Cargar</h2>
-    <p><strong>Guardar:</strong> Descarga un archivo <code>.nsgen</code> con todo el proyecto (métodos, bloques y declaraciones).</p>
-    <p><strong>Cargar:</strong> Abre un archivo <code>.nsgen</code> previamente guardado.</p>
-    <p><strong>Historial:</strong> Recupera las últimas 10 versiones guardadas automáticamente en el navegador.</p>
-    <p><strong>Autoguardado:</strong> Cada 30 segundos y con cada edición de bloque o declaración.</p>
+    <p>Guarda como <code>.nsgen</code> (incluye todo el proyecto). Historial: últimas 10 versiones autoguardadas en el navegador. Autoguardado cada 30 segundos y con cada edición.</p>
 
     <h2>✓ Validación</h2>
-    <p>El botón <strong>✓ Validar</strong> analiza el diagrama y reporta: bloques sin condición (IF, WHILE), bloques de repetición vacíos, entradas/salidas sin variable, declaraciones con tipo inválido, variables declaradas pero no usadas, y variables usadas en bloques pero no declaradas.</p>
+    <p>Detecta: bloques sin condición, bucles vacíos, E/S sin variable, tipos inválidos, variables declaradas pero no usadas, variables usadas pero no declaradas.</p>
 
-    <h2>📤 Exportación de Código</h2>
-    <p>Desde la vista <strong>Código</strong> podés seleccionar el lenguaje de salida: <strong>NS+ Code</strong> (pseudocódigo), <strong>Java</strong> (con Scanner automático y parsing por tipo), <strong>Python</strong> (con type hints), <strong>C++</strong> (con iostream), <strong>C#</strong> (con Console), <strong>JavaScript</strong> (con console.log/prompt), y <strong>ASCII Art</strong> (diagrama en texto plano para documentos).</p>
-    <p>El botón <strong>Exportar .txt</strong> descarga todos los lenguajes juntos en un único archivo de texto.</p>
+    <h2>🎨 Presentación y PNG</h2>
+    <p><strong>📽 Presentación</strong> activa la vista limpia sin herramientas. El botón <strong>💬 Comentarios</strong> muestra/oculta bloques de comentario. <strong>📷 PNG</strong> (solo en presentación) exporta el diagrama completo en alta resolución con timestamp en el nombre del archivo.</p>
 
-    <h2>🎨 Modo Presentación y Exportación PNG</h2>
-    <p>El botón <strong>📽 Presentación</strong> activa la vista limpia sin herramientas de edición, ideal para exponer en clase. En este modo aparece el botón <strong>💬 Comentarios</strong> para mostrar u ocultar los bloques de comentario.</p>
-    <p>El botón <strong>📷 PNG</strong> solo funciona en modo presentación. Exporta el diagrama completo (no solo la parte visible — incluye el scroll completo) como imagen de alta resolución. El nombre del archivo incluye un timestamp <code>AAAAMMDDHHMMSS</code> para ordenamiento cronológico. Si los comentarios están ocultos, se agrega el sufijo <code>_sinComentarios</code>.</p>
-
-    <h2>🌙 Tema Oscuro</h2>
-    <p>El botón de luna/sol en la topbar alterna entre modo claro y oscuro. La preferencia se guarda en el navegador.</p>
-
-    <h2>📱 Instalación como App (PWA)</h2>
-    <p>En Chrome/Firefox, abrí NS+Gen y usá "Agregar a pantalla de inicio" o "Instalar aplicación". Funciona 100% offline después de la primera carga.</p>
+    <h2>📱 Instalación offline (PWA)</h2>
+    <p>Desde Chrome o Firefox: "Agregar a pantalla de inicio" o "Instalar aplicación". Funciona 100% offline después de la primera carga.</p>
 
     <h2>📄 Licencia</h2>
-    <p>NS+Gen es <strong>código abierto</strong> bajo licencia MIT. Repositorio: <code>github.com/dacaamano/nsgen-ort</code>.</p>
-    <p>Creado por <strong>Daniel Antonio Caamaño</strong> — ORT Argentina 2026. Donado a ORT Argentina para uso educativo libre.</p>
+    <p>Código abierto MIT · <a href="https://github.com/dacaamano/nsgen-ort" style="color:var(--blue)">github.com/dacaamano/nsgen-ort</a></p>
   `;
   document.getElementById('manualContent').innerHTML = manualHTML;
-}
-
-function copyCode(){
-  navigator.clipboard.writeText(document.getElementById('codeBlock').textContent)
-    .then(()=>{
-      showNotification('✓ Código copiado al portapapeles');
-    })
-    .catch(()=>{
-      showNotification('⚠ Error al copiar');
-    });
-}
-
-function showNotification(msg){
-  const notif = document.getElementById('notification');
-  if(notif){
-    notif.textContent = msg;
-    notif.classList.add('show');
-    setTimeout(()=>notif.classList.remove('show'), 2000);
-  }
-}
-
-function clearMethod(){
-  if(!confirm('¿Limpiar el método actual?')) return;
-  let m=getActive();m.blocks=[];m.decls=[];cancelMode();
-  triggerSave();
-}
-
-// ═══════════════════════════════════════════════════════
-//  ASCII ART ENGINE
-// ═══════════════════════════════════════════════════════
-
-function genASCII(m){
-  const MIN_W = 40;
-
-  function rep(ch,n){ return ch.repeat(Math.max(0,n)); }
-  function pad(s,w){ s=String(s||''); return s.length>=w?s.substring(0,w):s+rep(' ',w-s.length); }
-  function center(s,w){ s=String(s||''); let l=Math.floor((w-s.length)/2),r=w-s.length-l; return rep(' ',l)+s+rep(' ',r); }
-  function lw(line){ return line.length; }
-
-  // Border characters by nesting depth
-  function borderChars(depth){
-    const styles = [
-      {v:'║',h:'═',tl:'╔',tr:'╗',bl:'╚',br:'╝',ml:'╠',mr:'╣',mt:'╦',mb:'╩',cross:'╬'}, // Level 0: double
-      {v:'│',h:'─',tl:'┌',tr:'┐',bl:'└',br:'┘',ml:'├',mr:'┤',mt:'┬',mb:'┴',cross:'┼'}, // Level 1: single
-      {v:'¦',h:'╌',tl:'╭',tr:'╮',bl:'╰',br:'╯',ml:'├',mr:'┤',mt:'┬',mb:'┴',cross:'┼'}  // Level 2+: dashed
-    ];
-    return styles[Math.min(depth,2)];
-  }
-
-  // Calculate minimum interior width needed for a block list
-  function calcW(blocks, min){
-    let w = min||MIN_W;
-    for(const b of (blocks||[])){
-      const texts=[];
-      if(b.type==='E')       texts.push('E: '+b.label);
-      if(b.type==='S')       texts.push('S: '+b.label);
-      if(b.type==='INSTR'||b.type==='ASIG') texts.push(b.label);
-      if(b.type==='COMMENT') texts.push('/* '+b.label+' */');
-      if(b.type==='CALL')    texts.push(b.label);
-      if(b.type==='RETURN')  texts.push('return '+b.label);
-      if(b.type==='IF')      texts.push('('+b.cond+')');
-      if(b.type==='SWITCH')  texts.push(b.expr);
-      if(b.type==='WHILE')   texts.push('WHILE ('+b.cond+')');
-      if(b.type==='DOWHILE') texts.push('DO WHILE ('+b.cond+')');
-      if(b.type==='FOR'||b.type==='FOREACH') texts.push('FOR ('+b.header+')');
-      for(const t of texts) w=Math.max(w,t.length+4);
-
-      if(b.bodyBlocks) w=Math.max(w,calcW(b.bodyBlocks,min));
-      if(b.thenBlocks) w=Math.max(w,calcW(b.thenBlocks,min));
-      if(b.elseBlocks) w=Math.max(w,calcW(b.elseBlocks,min));
-      if(b.cases){
-        const n=b.cases.length||1;
-        let cw=0;
-        for(const c of b.cases){
-          cw=Math.max(cw,calcW(c.blocks,8));
-          cw=Math.max(cw,(c.label||'').length+4);
-        }
-        w=Math.max(w,cw*n+(n-1)+2);
-      }
-      if(b.type==='IF'){
-        const tw=calcW(b.thenBlocks,MIN_W/2|0);
-        const ew=calcW(b.elseBlocks,MIN_W/2|0);
-        w=Math.max(w,tw+ew+3);
-      }
-    }
-    return w;
-  }
-
-  function row(s,w,d,prefix){
-    d=d||0;
-    prefix=prefix||'';
-    const bc=borderChars(d);
-    return prefix+bc.v+' '+pad(s,w-2-prefix.length)+' '+bc.v;
-  }
-  function HR(w,d,prefix){
-    d=d||0;
-    prefix=prefix||'';
-    const bc=borderChars(d);
-    return prefix+bc.ml+rep(bc.h,w-prefix.length)+bc.mr;
-  }
-  function blank(w,d,prefix){
-    d=d||0;
-    prefix=prefix||'';
-    const bc=borderChars(d);
-    return prefix+bc.v+rep(' ',w-prefix.length)+bc.v;
-  }
-  function reframe(line,w,d,prefix){
-    d=d||0;
-    prefix=prefix||'';
-    const bc=borderChars(d);
-    if(line.length===w+2) return line;
-    const inner=line.slice(prefix.length+1,-1);
-    return prefix+bc.v+pad(inner,w-prefix.length)+bc.v;
-  }
-
-  function blocksToLines(blocks,w,depth,prefix){
-    depth=depth||0;
-    prefix=prefix||'';
-    const out=[];
-    for(const b of (blocks||[])) out.push(...blockToLines(b,w,depth,prefix));
-    return out;
-  }
-
-  function blockToLines(b,w,depth,prefix){
-    depth=depth||0;
-    prefix=prefix||'';
-    const bc=borderChars(depth);
-    const lines=[];
-    switch(b.type){
-      case 'E':      lines.push(row('E: '+b.label,w,depth,prefix)); break;
-      case 'S':      lines.push(row('S: '+b.label,w,depth,prefix)); break;
-      case 'INSTR':
-      case 'ASIG':   lines.push(row(b.label,w,depth,prefix)); break;
-      case 'COMMENT':lines.push(row('/* '+b.label+' */',w,depth,prefix)); break;
-      case 'CALL':   lines.push(prefix+bc.v+bc.v+' '+pad(b.label,w-2-prefix.length)+' '+bc.v+bc.v); break;
-      case 'RETURN': lines.push(row('return '+b.label,w,depth,prefix)); break;
-
-      case 'IF':{
-        const cond='('+b.cond+')';
-        lines.push(HR(w,depth,prefix));
-        lines.push(prefix+bc.v+center(cond,w-prefix.length)+bc.v);
-        const tw=calcW(b.thenBlocks,MIN_W/2|0);
-        const ew=calcW(b.elseBlocks,MIN_W/2|0);
-        // proportional split
-        const total=tw+ew;
-        const tIW=total>0?Math.round(tw/total*(w-1-prefix.length)):Math.floor((w-1-prefix.length)/2);
-        const eIW=w-1-prefix.length-tIW;
-        lines.push(prefix+bc.v+center('V',tIW)+bc.v+center('F',eIW)+bc.v);
-        lines.push(prefix+bc.ml+rep(bc.h,tIW)+bc.cross+rep(bc.h,eIW)+bc.mr);
-        const newPrefix=prefix+bc.v;
-        const tLines=blocksToLines(b.thenBlocks,tIW,depth+1,newPrefix);
-        const eLines=blocksToLines(b.elseBlocks,eIW,depth+1,newPrefix);
-        const bcNested=borderChars(depth+1);
-        const maxR=Math.max(tLines.length,eLines.length,1);
-        for(let i=0;i<maxR;i++){
-          const tl=tLines[i]||(newPrefix+bcNested.v+rep(' ',tIW-newPrefix.length)+bcNested.v);
-          const el=eLines[i]||(newPrefix+bcNested.v+rep(' ',eIW-newPrefix.length)+bcNested.v);
-          lines.push(prefix+bc.v+pad(tl.slice(prefix.length+1,-1),tIW)+bc.v+pad(el.slice(prefix.length+1,-1),eIW)+bc.v);
-        }
-        lines.push(prefix+bc.bl+rep(bc.h,tIW)+bc.mb+rep(bc.h,eIW)+bc.br);
-        break;
-      }
-
-      case 'SWITCH':{
-        const cases=b.cases||[];
-        const n=Math.max(cases.length,1);
-        lines.push(HR(w,depth,prefix));
-        lines.push(prefix+bc.v+center(b.expr,w-prefix.length)+bc.v);
-        const colIW=Math.max(8,Math.floor((w-prefix.length-(n-1))/n));
-        const colWs=cases.map((_,i)=>i<n-1?colIW:w-prefix.length-colIW*(n-1)-(n-1));
-        const lblRow=cases.map((c,i)=>' '+pad(c.label||'?',colWs[i]-1)).join(bc.v);
-        lines.push(prefix+bc.v+lblRow+bc.v);
-        lines.push(prefix+bc.ml+colWs.map(cw=>rep(bc.h,cw)).join(bc.cross)+bc.mr);
-        const newPrefix=prefix+bc.v;
-        const colLines=cases.map((c,i)=>blocksToLines(c.blocks,colWs[i],depth+1,newPrefix));
-        const bcNested=borderChars(depth+1);
-        const maxR=Math.max(...colLines.map(cl=>cl.length),1);
-        for(let i=0;i<maxR;i++){
-          const cells=colLines.map((cl,ci)=>{
-            const l=cl[i]||(newPrefix+bcNested.v+rep(' ',colWs[ci]-newPrefix.length)+bcNested.v);
-            return pad(l.slice(prefix.length+1,-1),colWs[ci]);
-          });
-          lines.push(prefix+bc.v+cells.join(bc.v)+bc.v);
-        }
-        lines.push(prefix+bc.bl+colWs.map(cw=>rep(bc.h,cw)).join(bc.mb)+bc.br);
-        break;
-      }
-
-      case 'WHILE':{
-        lines.push(HR(w,depth,prefix));
-        lines.push(row('WHILE ('+b.cond+')',w,depth,prefix));
-        lines.push(HR(w,depth,prefix));
-        const newPrefix=prefix+bc.v;
-        const bl=blocksToLines(b.bodyBlocks,w,depth+1,newPrefix);
-        if(bl.length===0) lines.push(blank(w,depth,prefix));
-        else bl.forEach(l=>lines.push(reframe(l,w,depth,prefix)));
-        lines.push(prefix+bc.bl+rep(bc.h,w-prefix.length)+bc.br);
-        break;
-      }
-
-      case 'DOWHILE':{
-        lines.push(HR(w,depth,prefix));
-        const newPrefix=prefix+bc.v;
-        const bl=blocksToLines(b.bodyBlocks,w,depth+1,newPrefix);
-        if(bl.length===0) lines.push(blank(w,depth,prefix));
-        else bl.forEach(l=>lines.push(reframe(l,w,depth,prefix)));
-        lines.push(HR(w,depth,prefix));
-        lines.push(row('DO WHILE ('+b.cond+')',w,depth,prefix));
-        lines.push(prefix+bc.bl+rep(bc.h,w-prefix.length)+bc.br);
-        break;
-      }
-
-      case 'FOR':
-      case 'FOREACH':{
-        const tag=b.type==='FOR'?'FOR':'FOR-EACH';
-        lines.push(HR(w,depth,prefix));
-        lines.push(row(tag+' ('+b.header+')',w,depth,prefix));
-        lines.push(HR(w,depth,prefix));
-        const newPrefix=prefix+bc.v;
-        const bl=blocksToLines(b.bodyBlocks,w,depth+1,newPrefix);
-        if(bl.length===0) lines.push(blank(w,depth,prefix));
-        else bl.forEach(l=>lines.push(reframe(l,w,depth,prefix)));
-        lines.push(prefix+bc.bl+rep(bc.h,w-prefix.length)+bc.br);
-        break;
-      }
-
-      default: break;
-    }
-    return lines;
-  }
-
-  // Build full diagram
-  const params=m.decls.filter(d=>d.type==='PARAM').map(d=>getDeclJavaLabel(d)).join(', ');
-  const sig=`public ${m.returnType} ${m.sig.replace(/\(.*\)/,`(${params})`)}`;
-  let w=calcW(m.blocks,MIN_W);
-  // Factor in declarations and signature
-  for(const d of m.decls){
-    const txt=getDeclJavaLabel(d);
-    w=Math.max(w,txt.length+4);
-  }
-  w=Math.max(w,sig.length+4);
-
-  const bc=borderChars(0); // Main level uses double borders
-  const out=[];
-  out.push(bc.tl+rep(bc.h,w)+bc.tr);
-  out.push(row(sig,w,0,''));
-  if(m.decls.length>0){
-    out.push(bc.ml+rep(bc.h,w)+bc.mr);
-    for(const d of m.decls){
-      out.push(row(getDeclJavaLabel(d),w,0,''));
-    }
-  }
-  out.push(bc.ml+rep(bc.h,w)+bc.mr);
-
-  const bodyLines=blocksToLines(m.blocks,w,0,'');
-  // Normalize all line widths
-  for(const l of bodyLines){
-    out.push(l);
-  }
-  if(bodyLines.length===0) out.push(blank(w,0));
-  out.push(bc.bl+rep(bc.h,w)+bc.br);
-  return out.join('\n');
-}
-
-// ═══════════════════════════════════════════════════════
-//  VALIDATION
-// ═══════════════════════════════════════════════════════
-
-function validateMethod(m){
-  const errors=[];
-  if(!m.name.trim()) errors.push('El método no tiene nombre de clase.');
-  if(!m.sig.trim())  errors.push('El método no tiene firma.');
-
-  function checkBlocks(blocks, ctx){
-    for(const b of (blocks||[])){
-      // Check conditions
-      if(b.type==='IF'&&!b.cond.trim())      errors.push(`IF sin condición${ctx?` (en ${ctx})`:''}.`);
-      if(b.type==='WHILE'&&!b.cond.trim())   errors.push(`WHILE sin condición${ctx?` (en ${ctx})`:''}.`);
-      if(b.type==='DOWHILE'&&!b.cond.trim()) errors.push(`DO-WHILE sin condición${ctx?` (en ${ctx})`:''}.`);
-      if(b.type==='SWITCH'&&!b.expr.trim())  errors.push(`SWITCH sin expresión${ctx?` (en ${ctx})`:''}.`);
-      if((b.type==='FOR'||b.type==='FOREACH')&&!b.header.trim()) errors.push(`FOR sin parámetros${ctx?` (en ${ctx})`:''}.`);
-      if((b.type==='E'||b.type==='S')&&!b.label.trim()) errors.push(`${b.type==='E'?'INPUT':'OUTPUT'} vacío${ctx?` (en ${ctx})`:''}.`);
-      
-      // Check empty bodies
-      if(b.type==='WHILE'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`WHILE sin contenido${ctx?` (en ${ctx})`:''}.`);
-      if(b.type==='DOWHILE'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`DO-WHILE sin contenido${ctx?` (en ${ctx})`:''}.`);
-      if(b.type==='FOR'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`FOR sin contenido${ctx?` (en ${ctx})`:''}.`);
-      if(b.type==='FOREACH'&&(!b.bodyBlocks||b.bodyBlocks.length===0)) errors.push(`FOREACH sin contenido${ctx?` (en ${ctx})`:''}.`);
-      if(b.type==='IF'&&(!b.thenBlocks||b.thenBlocks.length===0)&&(!b.elseBlocks||b.elseBlocks.length===0)) errors.push(`IF completamente vacío${ctx?` (en ${ctx})`:''}.`);
-      
-      // Recurse
-      checkBlocks(b.thenBlocks, 'IF-Verdadero');
-      checkBlocks(b.elseBlocks, 'IF-Falso');
-      checkBlocks(b.bodyBlocks, b.type);
-      if(b.cases) b.cases.forEach(c=>checkBlocks(c.blocks,'SWITCH caso '+c.label));
-    }
-  }
-  checkBlocks(m.blocks, '');
-
-  // ── VALIDACIÓN 1: declaraciones con tipo placeholder ──────────────────────
-  // Detecta declaraciones legacy que no migraron al selector (tipo libre que no es Java válido)
-  const JAVA_TYPES = /^(int|double|float|long|short|byte|char|boolean|String|Integer|Double|Float|Long|Boolean|void)/i;
-  m.decls.forEach(d => {
-    const {typeId} = getDeclParts(d);
-    if(!JAVA_TYPES.test(typeId)){
-      errors.push(`Declaración con tipo inválido: "${d.label.trim()}" — ¿falta especificar el tipo de dato?`);
-    }
-  });
-
-  // ── VALIDACIÓN 2 y 3: variables declaradas vs. usadas ─────────────────────
-  const declaredNames = new Set();
-  m.decls.forEach(d => {
-    const {name} = getDeclParts(d);
-    if(name) declaredNames.add(name);
-  });
-
-  // Recolectamos todos los identificadores usados en bloques (labels, condiciones, headers)
-  const usedNames = new Set();
-  function collectUsed(blocks){
-    for(const b of (blocks||[])){
-      const texts = [];
-      if(b.label) texts.push(b.label);
-      if(b.cond)  texts.push(b.cond);
-      if(b.expr)  texts.push(b.expr);
-      if(b.header) texts.push(b.header);
-      // extractIdentifiers ignora contenido entre comillas dobles — evita falsos positivos en S:
-      for(const t of texts) extractIdentifiers(t).forEach(tok => usedNames.add(tok));
-      collectUsed(b.thenBlocks);
-      collectUsed(b.elseBlocks);
-      collectUsed(b.bodyBlocks);
-      if(b.cases) b.cases.forEach(c => collectUsed(c.blocks));
-    }
-  }
-  collectUsed(m.blocks);
-
-  // Palabras reservadas y tipos que no son variables de usuario
-  const RESERVED = new Set([
-    'int','double','float','long','short','byte','char','boolean','void',
-    'String','Integer','Double','Float','Long','Boolean','true','false','null',
-    'if','else','while','for','do','switch','case','return','new','this','super',
-    'class','public','private','static','final','import','System','out','println',
-    'Scanner','nextLine','parseInt','parseDouble','parseFloat','parseLong','parseBoolean',
-    'equals','length','toString','input','close','i','j','k' // variables de control de FOR comunes
-  ]);
-
-  // Validación 2: declaradas pero nunca usadas
-  declaredNames.forEach(name => {
-    if(!usedNames.has(name) && !RESERVED.has(name)){
-      errors.push(`Variable declarada pero nunca usada: "${name}"`);
-    }
-  });
-
-  // Validación 3: usadas pero no declaradas
-  usedNames.forEach(name => {
-    if(!declaredNames.has(name) && !RESERVED.has(name) && name.length > 1){
-      errors.push(`Variable usada pero no declarada: "${name}"`);
-    }
-  });
-
-  return errors;
-}
-
-function saveProject(){
-  // Save the full project state as .nsgen (JSON)
-  const project = {
-    _nsgen: true,
-    version: '2.0',
-    savedAt: new Date().toISOString(),
-    activeMethodId,
-    idC,
-    methods
-  };
-  const blob = new Blob([JSON.stringify(project, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  // Use name of first method as filename
-  const fname = methods[0]?.name || 'proyecto';
-  a.download = `${fname}.nsgen`;
-  a.click();
-}
-
-function loadProject(input){
-  const file = input.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const project = JSON.parse(e.target.result);
-      if(!project._nsgen) throw new Error('Archivo no válido');
-      methods = project.methods;
-      activeMethodId = project.activeMethodId;
-      idC = project.idC || 1000;
-      cancelMode();
-      render();
-      alert(`✓ Proyecto cargado: ${methods.length} método(s)`);
-    } catch(err) {
-      alert('Error al cargar: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  // Reset input so same file can be loaded again
-  input.value = '';
-}
-
-function exportDiagram(){
-  let saved=activeMethodId;
-  const sections=[];
-
-  // ASCII art block for all methods
-  sections.push('╔══════════════════════════════════════════════════════╗');
-  sections.push('║              NS+Gen — Diagrama ASCII Art             ║');
-  sections.push('╚══════════════════════════════════════════════════════╝');
-  sections.push('');
-  methods.forEach(m=>{
-    activeMethodId=m.id;
-    sections.push(genASCII(m));
-    sections.push('');
-  });
-
-  // NS+ Code
-  sections.push('════════════════════════════════════════════════════════');
-  sections.push('  NS+ Code');
-  sections.push('════════════════════════════════════════════════════════');
-  methods.forEach(m=>{
-    activeMethodId=m.id;
-    sections.push(`--- ${m.name}: ${m.sig} ---`);
-    sections.push(genNS(m));
-  });
-
-  // Java
-  sections.push('════════════════════════════════════════════════════════');
-  sections.push('  Java');
-  sections.push('════════════════════════════════════════════════════════');
-  methods.forEach(m=>{ activeMethodId=m.id; sections.push(genJava(m)); });
-
-  // Python
-  sections.push('════════════════════════════════════════════════════════');
-  sections.push('  Python');
-  sections.push('════════════════════════════════════════════════════════');
-  methods.forEach(m=>{ activeMethodId=m.id; sections.push(genPython(m)); });
-
-  activeMethodId=saved;
-  const blob=new Blob([sections.join('\n')],{type:'text/plain'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`${methods[0]?.name||'proyecto'}_export.txt`;
-  a.click();
 }
 
 function validateAll(){
@@ -1883,7 +1003,6 @@ function validateAll(){
     alert('⚠ Problemas encontrados:\n\n'+allErrors.join('\n\n'));
   }
 }
-
 function togglePresentation(){
   presentationMode = !presentationMode;
   document.body.classList.toggle('presentation-mode', presentationMode);
@@ -2562,7 +1681,7 @@ Tamaño de etiquetas (FOR, WHILE, IF, etc.):
   .dw-tag { font-size: 10px }            Tamaño texto DO WHILE
   .if-lbl { font-size: 10px }            Tamaño texto V y F
 
-Tamaño de condiciones/código:
+Tamaño de condiciones:
   .lp-hdr input { font-size: 12px }      Input loops
   .ns-if-hdr input { font-size: 12px }   Input IF
   .ns-bi input { font-size: 12px }       Input instrucciones
